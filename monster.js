@@ -88,20 +88,30 @@ class Monster {
     }
 
     createHealthBar() {
+        // Create a separate group for health bar that can rotate independently
+        this.healthBarGroup = new THREE.Group();
+        this.healthBarGroup.position.y = 3;
+
         // Health bar background
         const bgGeometry = new THREE.PlaneGeometry(1.5, 0.2);
-        const bgMaterial = new THREE.MeshBasicMaterial({ color: 0x000000 });
+        const bgMaterial = new THREE.MeshBasicMaterial({
+            color: 0x000000,
+            side: THREE.DoubleSide
+        });
         this.healthBarBg = new THREE.Mesh(bgGeometry, bgMaterial);
-        this.healthBarBg.position.y = 3;
-        this.mesh.add(this.healthBarBg);
+        this.healthBarGroup.add(this.healthBarBg);
 
         // Health bar foreground
         const fgGeometry = new THREE.PlaneGeometry(1.5, 0.15);
-        const fgMaterial = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
+        const fgMaterial = new THREE.MeshBasicMaterial({
+            color: 0x00ff00,
+            side: THREE.DoubleSide
+        });
         this.healthBarFg = new THREE.Mesh(fgGeometry, fgMaterial);
-        this.healthBarFg.position.y = 3;
         this.healthBarFg.position.z = 0.01; // Slightly in front
-        this.mesh.add(this.healthBarFg);
+        this.healthBarGroup.add(this.healthBarFg);
+
+        this.mesh.add(this.healthBarGroup);
     }
 
     updateHealthBar() {
@@ -127,10 +137,14 @@ class Monster {
             this.attackCooldown -= delta;
         }
 
-        // Make health bar face camera
-        if (this.healthBarBg && game.camera) {
-            this.healthBarBg.lookAt(game.camera.position);
-            this.healthBarFg.lookAt(game.camera.position);
+        // Make health bar face camera (more stable approach)
+        if (this.healthBarGroup && game.camera) {
+            const cameraDirection = new THREE.Vector3();
+            game.camera.getWorldDirection(cameraDirection);
+
+            // Calculate angle to face camera
+            const angle = Math.atan2(cameraDirection.x, cameraDirection.z);
+            this.healthBarGroup.rotation.y = angle + Math.PI;
         }
 
         if (!player || player.health <= 0) return;

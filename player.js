@@ -115,28 +115,44 @@ class Player {
         const moveSpeed = this.speed * delta;
         let moved = false;
 
-        if (keys['w'] || keys['arrowup']) {
-            this.mesh.position.z -= moveSpeed;
-            moved = true;
-        }
-        if (keys['s'] || keys['arrowdown']) {
-            this.mesh.position.z += moveSpeed;
-            moved = true;
-        }
+        // Handle X-axis movement
         if (keys['a'] || keys['arrowleft']) {
             this.mesh.position.x -= moveSpeed;
-            moved = true;
+            // Check collision for X movement
+            if (wallSystem && wallSystem.checkCollision(this.mesh.position)) {
+                this.mesh.position.x = oldPosition.x; // Revert only X
+            } else {
+                moved = true;
+            }
         }
         if (keys['d'] || keys['arrowright']) {
             this.mesh.position.x += moveSpeed;
-            moved = true;
+            // Check collision for X movement
+            if (wallSystem && wallSystem.checkCollision(this.mesh.position)) {
+                this.mesh.position.x = oldPosition.x; // Revert only X
+            } else {
+                moved = true;
+            }
         }
 
-        // Check wall collision
-        if (wallSystem && wallSystem.checkCollision(this.mesh.position)) {
-            // Revert to old position if collision detected
-            this.mesh.position.copy(oldPosition);
-            moved = false;
+        // Handle Z-axis movement
+        if (keys['w'] || keys['arrowup']) {
+            this.mesh.position.z -= moveSpeed;
+            // Check collision for Z movement
+            if (wallSystem && wallSystem.checkCollision(this.mesh.position)) {
+                this.mesh.position.z = oldPosition.z; // Revert only Z
+            } else {
+                moved = true;
+            }
+        }
+        if (keys['s'] || keys['arrowdown']) {
+            this.mesh.position.z += moveSpeed;
+            // Check collision for Z movement
+            if (wallSystem && wallSystem.checkCollision(this.mesh.position)) {
+                this.mesh.position.z = oldPosition.z; // Revert only Z
+            } else {
+                moved = true;
+            }
         }
 
         // Keep player within bounds
