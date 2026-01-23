@@ -1,5 +1,5 @@
 class Monster {
-    constructor(scene, x, z) {
+    constructor(scene, x, z, zoneConfig = null) {
         this.scene = scene;
         this.speed = 2;
         this.detectionRange = 20;
@@ -7,10 +7,22 @@ class Monster {
         this.attackCooldown = 0;
         this.attackCooldownTime = 1.5;
 
-        // Stats
-        this.maxHealth = 50;
-        this.health = 50;
-        this.damage = 10;
+        // Apply zone configuration if provided
+        if (zoneConfig) {
+            this.maxHealth = zoneConfig.health;
+            this.health = zoneConfig.health;
+            this.damage = zoneConfig.damage;
+            this.color = zoneConfig.color;
+            this.scale = zoneConfig.scale;
+        } else {
+            // Default stats
+            this.maxHealth = 50;
+            this.health = 50;
+            this.damage = 10;
+            this.color = 0x8b0000;
+            this.scale = 1.0;
+        }
+
         this.xpReward = 25;
 
         // Create monster mesh
@@ -23,7 +35,7 @@ class Monster {
 
         // Create monster body (box with horns)
         const bodyGeometry = new THREE.BoxGeometry(1, 1.5, 1);
-        const bodyMaterial = new THREE.MeshStandardMaterial({ color: 0x8b0000 }); // Dark red
+        const bodyMaterial = new THREE.MeshStandardMaterial({ color: this.color });
         const body = new THREE.Mesh(bodyGeometry, bodyMaterial);
         body.position.y = 0.75;
         body.castShadow = true;
@@ -31,7 +43,7 @@ class Monster {
 
         // Create head
         const headGeometry = new THREE.SphereGeometry(0.5, 8, 8);
-        const headMaterial = new THREE.MeshStandardMaterial({ color: 0xa00000 });
+        const headMaterial = new THREE.MeshStandardMaterial({ color: this.color });
         const head = new THREE.Mesh(headGeometry, headMaterial);
         head.position.y = 1.8;
         head.castShadow = true;
@@ -62,6 +74,9 @@ class Monster {
         const rightEye = new THREE.Mesh(eyeGeometry, eyeMaterial);
         rightEye.position.set(0.2, 1.9, 0.4);
         this.mesh.add(rightEye);
+
+        // Apply scale
+        this.mesh.scale.set(this.scale, this.scale, this.scale);
 
         // Position monster
         this.mesh.position.set(x, 0, z);

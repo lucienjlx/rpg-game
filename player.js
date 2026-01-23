@@ -53,17 +53,20 @@ class Player {
         cape.castShadow = true;
         this.mesh.add(cape);
 
-        // Position player at origin
-        this.mesh.position.set(0, 0, 0);
+        // Position player at starting position in Zone 1
+        this.mesh.position.set(-25, 0, 0);
 
         this.scene.add(this.mesh);
     }
 
-    update(delta, keys) {
+    update(delta, keys, wallSystem = null) {
         // Update attack cooldown
         if (this.attackCooldown > 0) {
             this.attackCooldown -= delta;
         }
+
+        // Store old position for collision detection
+        const oldPosition = this.mesh.position.clone();
 
         // Movement
         const moveSpeed = this.speed * delta;
@@ -86,10 +89,17 @@ class Player {
             moved = true;
         }
 
+        // Check wall collision
+        if (wallSystem && wallSystem.checkCollision(this.mesh.position)) {
+            // Revert to old position if collision detected
+            this.mesh.position.copy(oldPosition);
+            moved = false;
+        }
+
         // Keep player within bounds
-        const boundary = 45;
-        this.mesh.position.x = Math.max(-boundary, Math.min(boundary, this.mesh.position.x));
-        this.mesh.position.z = Math.max(-boundary, Math.min(boundary, this.mesh.position.z));
+        const boundary = 200; // Increased to accommodate all zones
+        this.mesh.position.x = Math.max(-50, Math.min(150, this.mesh.position.x));
+        this.mesh.position.z = Math.max(-25, Math.min(25, this.mesh.position.z));
 
         // Rotate player based on movement direction
         if (moved) {
@@ -153,7 +163,7 @@ class Player {
         // Respawn after delay
         setTimeout(() => {
             this.health = this.maxHealth;
-            this.mesh.position.set(0, 0, 0);
+            this.mesh.position.set(-25, 0, 0);
             this.updateUI();
         }, 3000);
     }

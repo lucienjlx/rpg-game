@@ -9,6 +9,10 @@ const game = {
     clock: new THREE.Clock(),
     monsterSpawnTimer: 0,
     monsterSpawnInterval: 3, // seconds
+    zoneSystem: null,
+    wallSystem: null,
+    fogSystem: null,
+    progressionCheckTimer: 0,
 };
 
 // Initialize the game
@@ -39,25 +43,27 @@ function init() {
     const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
     directionalLight.position.set(10, 20, 10);
     directionalLight.castShadow = true;
-    directionalLight.shadow.camera.left = -50;
-    directionalLight.shadow.camera.right = 50;
+    directionalLight.shadow.camera.left = -100;
+    directionalLight.shadow.camera.right = 200;
     directionalLight.shadow.camera.top = 50;
     directionalLight.shadow.camera.bottom = -50;
     game.scene.add(directionalLight);
 
-    // Create ground
-    const groundGeometry = new THREE.PlaneGeometry(100, 100);
-    const groundMaterial = new THREE.MeshStandardMaterial({
-        color: 0x228b22,
-        roughness: 0.8
-    });
-    const ground = new THREE.Mesh(groundGeometry, groundMaterial);
-    ground.rotation.x = -Math.PI / 2;
-    ground.receiveShadow = true;
-    game.scene.add(ground);
+    // Initialize zone system
+    game.zoneSystem = new ZoneSystem();
+    game.zoneSystem.createZoneGrounds(game.scene);
+
+    // Initialize wall system
+    game.wallSystem = new WallSystem();
+    game.wallSystem.createWalls(game.scene);
+
+    // Initialize fog system
+    game.fogSystem = new FogSystem();
+    game.fogSystem.createAllFog(game.zoneSystem.zones, game.scene);
 
     // Add grid helper for reference
-    const gridHelper = new THREE.GridHelper(100, 50, 0x000000, 0x444444);
+    const gridHelper = new THREE.GridHelper(200, 100, 0x000000, 0x444444);
+    gridHelper.position.x = 50; // Center grid on all zones
     game.scene.add(gridHelper);
 
     // Create player
@@ -100,7 +106,7 @@ function animate() {
 
     // Update player
     if (game.player) {
-        game.player.update(delta, game.keys);
+        game.player.update(delta, game.keys, game.wallSystem);
 
         // Update camera to follow player
         const playerPos = game.player.mesh.position;
@@ -108,6 +114,18 @@ function animate() {
         game.camera.position.y = playerPos.y + 5;
         game.camera.position.z = playerPos.z + 10;
         game.camera.lookAt(playerPos);
+
+        // Update zone UI
+        const currentZone = game.zoneSystem.getCurrentZone(playerPos);
+        const zoneElement = document.getElementById('current-zone');
+        if (zoneElement) {
+            zoneElement.textContent = currentZone.name;
+        }
+    }
+
+    // Check progression
+    if (game.zoneSystem && game.player) {
+        game.zoneSystem.checkProgression(game.player, game);
     }
 
     // Update monsters
@@ -134,13 +152,33 @@ function animate() {
 
 // Spawn a monster at a random position
 function spawnMonster() {
-    const angle = Math.random() * Math.PI * 2;
-    const distance = 15 + Math.random() * 10;
-    const x = Math.cos(angle) * distance;
-    const z = Math.sin(angle) * distance;
+    if (!game.player || !game.zoneSystem) return;
 
-    const monster = new Monster(game.scene, x, z);
+    // Get current player zone
+    const playerZone = game.zoneSystem.getCurrentZone(game.player.mesh.position);
+
+    // Get a zone to spawn in (current or adjacent unlocked zones)
+    const spawnZone = game.zoneSystem.getZoneForSpawning(playerZone);
+
+    // Get random position within the spawn zone
+    const pos = game.zoneSystem.getRandomPositionInZone(spawnZone);
+
+    // Create monster with zone-specific configuration
+    const monster = new Monster(game.scene, pos.x, pos.z, spawnZone.monsterConfig);
     game.monsters.push(monster);
+}
+
+// Spawn a boss monster in a zone
+function spawnBoss(zone) {
+    // Get center position of the zone
+    const centerX = (zone.bounds.minX + zone.bounds.maxX) / 2;
+    const centerZ = (zone.bounds.minZ + zone.bounds.maxZ) / 2;
+
+    // Create boss monster
+    const boss = new BossMonster(game.scene, centerX, centerZ, zone);
+    game.monsters.push(boss);
+
+    showMessage(`A powerful boss has appeared in ${zone.name}!`, 3000);
 }
 
 // Show message to player
