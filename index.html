@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D RPG Game</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- 3D Canvas -->
+    <div id="game-container"></div>
+
+    <!-- UI Overlay -->
+    <div id="ui-overlay">
+        <div id="stats-panel">
+            <h2>Player Stats</h2>
+            <div class="stat-row">
+                <span>Level:</span>
+                <span id="player-level">1</span>
+            </div>
+            <div class="stat-row">
+                <span>Health:</span>
+                <div class="bar-container">
+                    <div id="health-bar" class="bar health-bar"></div>
+                    <span id="health-text">100/100</span>
+                </div>
+            </div>
+            <div class="stat-row">
+                <span>XP:</span>
+                <div class="bar-container">
+                    <div id="xp-bar" class="bar xp-bar"></div>
+                    <span id="xp-text">0/100</span>
+                </div>
+            </div>
+        </div>
+
+        <div id="controls-panel">
+            <h3>Controls</h3>
+            <p>WASD - Move</p>
+            <p>Mouse - Look Around</p>
+            <p>Space - Attack</p>
+        </div>
+
+        <div id="message-panel"></div>
+    </div>
+
+    <!-- Three.js Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+    <!-- Game Scripts -->
+    <script src="levelSystem.js"></script>
+    <script src="player.js"></script>
+    <script src="monster.js"></script>
+    <script src="combat.js"></script>
+    <script src="game.js"></script>
+</body>
+</html>
