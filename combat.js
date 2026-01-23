@@ -7,7 +7,12 @@ function performAttack() {
 
     game.player.startAttackCooldown();
 
-    // Visual attack animation
+    // Sword swing animation
+    if (game.player.swingSword) {
+        game.player.swingSword();
+    }
+
+    // Visual attack animation (body scale)
     const originalScale = game.player.mesh.scale.clone();
     game.player.mesh.scale.set(1.2, 1.2, 1.2);
     setTimeout(() => {

@@ -23,7 +23,7 @@ class Monster {
             this.scale = 1.0;
         }
 
-        this.xpReward = 25;
+        this.xpReward = 50; // Doubled from 25 for faster progression
 
         // Create monster mesh
         this.createMesh(x, z);
@@ -81,13 +81,56 @@ class Monster {
         // Position monster
         this.mesh.position.set(x, 0, z);
 
+        // Create health bar
+        this.createHealthBar();
+
         this.scene.add(this.mesh);
+    }
+
+    createHealthBar() {
+        // Health bar background
+        const bgGeometry = new THREE.PlaneGeometry(1.5, 0.2);
+        const bgMaterial = new THREE.MeshBasicMaterial({ color: 0x000000 });
+        this.healthBarBg = new THREE.Mesh(bgGeometry, bgMaterial);
+        this.healthBarBg.position.y = 3;
+        this.mesh.add(this.healthBarBg);
+
+        // Health bar foreground
+        const fgGeometry = new THREE.PlaneGeometry(1.5, 0.15);
+        const fgMaterial = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
+        this.healthBarFg = new THREE.Mesh(fgGeometry, fgMaterial);
+        this.healthBarFg.position.y = 3;
+        this.healthBarFg.position.z = 0.01; // Slightly in front
+        this.mesh.add(this.healthBarFg);
+    }
+
+    updateHealthBar() {
+        if (!this.healthBarFg) return;
+
+        const healthPercent = this.health / this.maxHealth;
+        this.healthBarFg.scale.x = healthPercent;
+        this.healthBarFg.position.x = -0.75 * (1 - healthPercent);
+
+        // Change color based on health
+        if (healthPercent > 0.5) {
+            this.healthBarFg.material.color.set(0x00ff00); // Green
+        } else if (healthPercent > 0.25) {
+            this.healthBarFg.material.color.set(0xffff00); // Yellow
+        } else {
+            this.healthBarFg.material.color.set(0xff0000); // Red
+        }
     }
 
     update(delta, player) {
         // Update attack cooldown
         if (this.attackCooldown > 0) {
             this.attackCooldown -= delta;
+        }
+
+        // Make health bar face camera
+        if (this.healthBarBg && game.camera) {
+            this.healthBarBg.lookAt(game.camera.position);
+            this.healthBarFg.lookAt(game.camera.position);
         }
 
         if (!player || player.health <= 0) return;
@@ -139,6 +182,9 @@ class Monster {
 
     takeDamage(amount) {
         this.health -= amount;
+
+        // Update health bar
+        this.updateHealthBar();
 
         // Visual feedback - flash red
         this.mesh.children.forEach(child => {

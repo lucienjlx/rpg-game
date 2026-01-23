@@ -12,7 +12,8 @@ class WallSystem {
         for (let i = 0; i < this.wallPositions.length; i++) {
             const pos = this.wallPositions[i];
 
-            const geometry = new THREE.BoxGeometry(1, 5, 50);
+            // Make walls thicker to prevent glitching through
+            const geometry = new THREE.BoxGeometry(3, 5, 50);
             const material = new THREE.MeshStandardMaterial({
                 color: 0x808080,
                 roughness: 0.9,
@@ -37,10 +38,10 @@ class WallSystem {
         for (let wall of this.walls) {
             if (!wall.active) continue;
 
-            // AABB collision detection
-            const wallHalfWidth = 0.5;  // Wall width is 1
+            // AABB collision detection with larger buffer
+            const wallHalfWidth = 1.5;  // Wall width is now 3
             const wallHalfDepth = 25;   // Wall depth is 50
-            const playerRadius = 0.5;   // Player collision radius
+            const playerRadius = 1.0;   // Increased player collision radius
 
             const minX = wall.position.x - wallHalfWidth - playerRadius;
             const maxX = wall.position.x + wallHalfWidth + playerRadius;

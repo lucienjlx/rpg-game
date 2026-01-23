@@ -128,6 +128,34 @@ function animate() {
         game.zoneSystem.checkProgression(game.player, game);
     }
 
+    // Auto-attack nearby monsters
+    if (game.player && game.player.canAttack()) {
+        const playerPos = game.player.mesh.position;
+        const attackRange = game.player.attackRange;
+
+        // Find closest monster in range
+        let closestMonster = null;
+        let closestDistance = attackRange;
+
+        game.monsters.forEach(monster => {
+            const monsterPos = monster.getPosition();
+            const distance = Math.sqrt(
+                Math.pow(playerPos.x - monsterPos.x, 2) +
+                Math.pow(playerPos.z - monsterPos.z, 2)
+            );
+
+            if (distance <= attackRange && distance < closestDistance) {
+                closestMonster = monster;
+                closestDistance = distance;
+            }
+        });
+
+        // Auto-attack if monster found
+        if (closestMonster) {
+            performAttack();
+        }
+    }
+
     // Update monsters
     game.monsters.forEach((monster, index) => {
         if (monster.health <= 0) {

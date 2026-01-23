@@ -53,6 +53,49 @@ class Player {
         cape.castShadow = true;
         this.mesh.add(cape);
 
+        // Create sword weapon
+        const swordGroup = new THREE.Group();
+
+        // Sword blade
+        const bladeGeometry = new THREE.BoxGeometry(0.15, 1.5, 0.05);
+        const bladeMaterial = new THREE.MeshStandardMaterial({
+            color: 0xc0c0c0,
+            metalness: 0.9,
+            roughness: 0.1
+        });
+        const blade = new THREE.Mesh(bladeGeometry, bladeMaterial);
+        blade.position.y = 0.75;
+        blade.castShadow = true;
+        swordGroup.add(blade);
+
+        // Sword handle
+        const handleGeometry = new THREE.CylinderGeometry(0.08, 0.08, 0.4, 8);
+        const handleMaterial = new THREE.MeshStandardMaterial({
+            color: 0x8b4513,
+            roughness: 0.8
+        });
+        const handle = new THREE.Mesh(handleGeometry, handleMaterial);
+        handle.castShadow = true;
+        swordGroup.add(handle);
+
+        // Sword guard
+        const guardGeometry = new THREE.BoxGeometry(0.4, 0.05, 0.1);
+        const guardMaterial = new THREE.MeshStandardMaterial({
+            color: 0xffd700,
+            metalness: 0.8,
+            roughness: 0.2
+        });
+        const guard = new THREE.Mesh(guardGeometry, guardMaterial);
+        guard.position.y = 0.2;
+        guard.castShadow = true;
+        swordGroup.add(guard);
+
+        // Position sword at player's side
+        swordGroup.position.set(0.6, 1, 0);
+        swordGroup.rotation.z = -Math.PI / 4;
+        this.mesh.add(swordGroup);
+        this.sword = swordGroup;
+
         // Position player at starting position in Zone 1
         this.mesh.position.set(-25, 0, 0);
 
@@ -191,5 +234,38 @@ class Player {
 
     startAttackCooldown() {
         this.attackCooldown = this.attackCooldownTime;
+    }
+
+    swingSword() {
+        if (!this.sword) return;
+
+        // Animate sword swing
+        const originalRotation = this.sword.rotation.clone();
+        const swingDuration = 200; // milliseconds
+        const startTime = Date.now();
+
+        const animate = () => {
+            const elapsed = Date.now() - startTime;
+            const progress = Math.min(elapsed / swingDuration, 1);
+
+            // Swing from side to front
+            if (progress < 0.5) {
+                // Forward swing
+                const swingProgress = progress * 2;
+                this.sword.rotation.z = originalRotation.z + (Math.PI / 2) * swingProgress;
+            } else {
+                // Return to original position
+                const returnProgress = (progress - 0.5) * 2;
+                this.sword.rotation.z = originalRotation.z + (Math.PI / 2) * (1 - returnProgress);
+            }
+
+            if (progress < 1) {
+                requestAnimationFrame(animate);
+            } else {
+                this.sword.rotation.copy(originalRotation);
+            }
+        };
+
+        animate();
     }
 }

@@ -6,7 +6,7 @@ class BossMonster extends Monster {
         this.maxHealth = zoneConfig.bossConfig.health;
         this.health = zoneConfig.bossConfig.health;
         this.damage = zoneConfig.bossConfig.damage;
-        this.xpReward = 125; // 5x base XP reward
+        this.xpReward = 250; // Increased from 125 for faster progression
         this.color = zoneConfig.bossConfig.color;
         this.scale = zoneConfig.bossConfig.scale;
 
