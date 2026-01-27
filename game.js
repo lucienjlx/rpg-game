@@ -99,8 +99,12 @@ function init() {
         game.player
     );
 
-    // Create Smith NPC in Zone 1 (starting zone)
-    game.smith = new Smith(game.scene, -25, 0);
+    // Create Smith NPC near the player in Zone 1 (starting zone)
+    game.smith = new Smith(
+        game.scene,
+        game.player.mesh.position.x + 6,
+        game.player.mesh.position.z + 4
+    );
 
     // Set up speed button
     const speedButton = document.getElementById('speed-button');
@@ -137,9 +141,11 @@ function init() {
 
         // Interact with Smith with 'E' key
         if (e.key.toLowerCase() === 'e') {
-            if (game.player && game.smith && game.player.craftingUI) {
+            if (game.player && game.smith && game.player.craftingUI && game.gameStarted) {
                 if (game.smith.isPlayerInRange(game.player.mesh.position)) {
                     game.player.craftingUI.toggle();
+                } else {
+                    showMessage('Find the Smith to craft.', 1500);
                 }
             }
         }

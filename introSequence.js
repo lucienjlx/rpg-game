@@ -251,6 +251,9 @@ class IntroSequence {
 
         const kingdomSize = 160;
         const halfSize = kingdomSize / 2;
+        const roadWidth = 8;
+        const canalWidth = 12;
+        const canalZ = -20;
 
         // Outer walls and towers
         const wallMat = new THREE.MeshStandardMaterial({
@@ -261,17 +264,58 @@ class IntroSequence {
         const outerWalls = this.createKingdomWalls(kingdomSize, 12, 3, wallMat);
         group.add(outerWalls);
 
+        // Gatehouses for each wall
+        const gatehouses = this.createGatehouses(kingdomSize, wallMat);
+        group.add(gatehouses);
+
+        // Main roads
+        const roads = this.createCityRoads(kingdomSize, roadWidth);
+        group.add(roads);
+
+        // Canal with ships and bridges
+        const canal = this.createCanal(kingdomSize - 30, canalWidth);
+        canal.position.set(0, 0, canalZ);
+        group.add(canal);
+
         // Main castle (much larger and more detailed)
         const castleGroup = this.createDetailedCastle();
         group.add(castleGroup);
 
-        // City buildings around castle (80+ buildings)
-        const buildingCount = 80;
+        // Monument plaza
+        const monument = this.createMonument();
+        monument.position.set(0, 0, 22);
+        group.add(monument);
+
+        // Market district
+        const market = this.createMarketStalls(14, {
+            minX: -35,
+            maxX: 35,
+            minZ: 25,
+            maxZ: 55
+        });
+        group.add(market);
+
+        // City buildings around castle (120+ buildings)
+        const buildingCount = 120;
+        const canalBuffer = canalWidth / 2 + 6;
+        const roadBuffer = roadWidth / 2 + 4;
         for (let i = 0; i < buildingCount; i++) {
             const x = (Math.random() * (kingdomSize - 24)) - (halfSize - 12);
             const z = (Math.random() * (kingdomSize - 24)) - (halfSize - 12);
 
-            if (Math.abs(x) < 14 && Math.abs(z) < 14) {
+            if (Math.abs(x) < 16 && Math.abs(z) < 16) {
+                i--;
+                continue;
+            }
+            if (Math.abs(x) < roadBuffer || Math.abs(z) < roadBuffer) {
+                i--;
+                continue;
+            }
+            if (Math.abs(z - canalZ) < canalBuffer) {
+                i--;
+                continue;
+            }
+            if (x > -40 && x < 40 && z > 20 && z < 60) {
                 i--;
                 continue;
             }
@@ -282,11 +326,15 @@ class IntroSequence {
         }
 
         // People (small moving figures)
-        const peopleCount = 60;
+        const peopleCount = 90;
         for (let i = 0; i < peopleCount; i++) {
             const person = this.createPerson();
             const x = (Math.random() * (kingdomSize - 30)) - (halfSize - 15);
             const z = (Math.random() * (kingdomSize - 30)) - (halfSize - 15);
+            if (Math.abs(z - canalZ) < canalWidth / 2 + 2) {
+                i--;
+                continue;
+            }
             person.position.set(x, 0, z);
             group.add(person);
         }
@@ -312,6 +360,10 @@ class IntroSequence {
         glow.rotation.x = -Math.PI / 2;
         glow.position.y = 0.1;
         group.add(glow);
+
+        // Distant hills for depth
+        const hills = this.createBackgroundHills(220, 18);
+        group.add(hills);
 
         this.scene.add(group);
         this.introObjects.push(group);
@@ -344,6 +396,9 @@ class IntroSequence {
             building.position.set(x, 0, z);
             group.add(building);
         }
+
+        const hills = this.createBackgroundHills(170, 12);
+        group.add(hills);
 
         const groundGeo = new THREE.PlaneGeometry(kingdomSize + 30, kingdomSize + 30);
         const groundMat = new THREE.MeshStandardMaterial({ color: 0x228b22 });
@@ -394,6 +449,428 @@ class IntroSequence {
             tower.position.set(x, (height + 6) / 2, z);
             tower.castShadow = true;
             group.add(tower);
+        }
+
+        return group;
+    }
+
+    createGatehouses(kingdomSize, wallMat) {
+        const group = new THREE.Group();
+        const half = kingdomSize / 2;
+        const gateWidth = 22;
+        const gateHeight = 14;
+        const gateDepth = 6;
+
+        const northGate = this.createGatehouse(gateWidth, gateHeight, gateDepth, wallMat);
+        northGate.position.set(0, 0, -half);
+        group.add(northGate);
+
+        const southGate = this.createGatehouse(gateWidth, gateHeight, gateDepth, wallMat);
+        southGate.position.set(0, 0, half);
+        southGate.rotation.y = Math.PI;
+        group.add(southGate);
+
+        const eastGate = this.createGatehouse(gateWidth, gateHeight, gateDepth, wallMat);
+        eastGate.position.set(half, 0, 0);
+        eastGate.rotation.y = Math.PI / 2;
+        group.add(eastGate);
+
+        const westGate = this.createGatehouse(gateWidth, gateHeight, gateDepth, wallMat);
+        westGate.position.set(-half, 0, 0);
+        westGate.rotation.y = -Math.PI / 2;
+        group.add(westGate);
+
+        return group;
+    }
+
+    createGatehouse(width, height, depth, wallMat) {
+        const group = new THREE.Group();
+        const roofMat = new THREE.MeshStandardMaterial({
+            color: 0x8B0000,
+            roughness: 0.8
+        });
+        const doorMat = new THREE.MeshStandardMaterial({
+            color: 0x5A3B2E,
+            roughness: 0.9
+        });
+        const bannerMat = new THREE.MeshBasicMaterial({
+            color: 0xB22222,
+            side: THREE.DoubleSide
+        });
+
+        const pillarGeo = new THREE.BoxGeometry(4, height - 2, depth);
+        const leftPillar = new THREE.Mesh(pillarGeo, wallMat);
+        leftPillar.position.set(-width / 2 + 2, (height - 2) / 2, 0);
+        leftPillar.castShadow = true;
+        group.add(leftPillar);
+
+        const rightPillar = new THREE.Mesh(pillarGeo, wallMat);
+        rightPillar.position.set(width / 2 - 2, (height - 2) / 2, 0);
+        rightPillar.castShadow = true;
+        group.add(rightPillar);
+
+        const topBeamGeo = new THREE.BoxGeometry(width - 6, 3, depth);
+        const topBeam = new THREE.Mesh(topBeamGeo, wallMat);
+        topBeam.position.y = height - 1.5;
+        topBeam.castShadow = true;
+        group.add(topBeam);
+
+        const roofGeo = new THREE.ConeGeometry(width / 2 + 2, 4, 4);
+        const roof = new THREE.Mesh(roofGeo, roofMat);
+        roof.position.y = height + 1.5;
+        roof.rotation.y = Math.PI / 4;
+        group.add(roof);
+
+        const doorGeo = new THREE.BoxGeometry(width - 8, height - 6, 0.5);
+        const door = new THREE.Mesh(doorGeo, doorMat);
+        door.position.set(0, (height - 6) / 2, depth / 2 - 0.3);
+        door.castShadow = true;
+        group.add(door);
+
+        const bannerGeo = new THREE.PlaneGeometry(4, 6);
+        const banner = new THREE.Mesh(bannerGeo, bannerMat);
+        banner.position.set(0, height - 4, depth / 2 + 0.2);
+        group.add(banner);
+
+        return group;
+    }
+
+    createCityRoads(kingdomSize, roadWidth) {
+        const group = new THREE.Group();
+        const roadLength = kingdomSize - 10;
+        const roadMat = new THREE.MeshStandardMaterial({
+            color: 0x8B6B4A,
+            roughness: 0.9
+        });
+
+        const eastWest = new THREE.Mesh(new THREE.PlaneGeometry(roadLength, roadWidth), roadMat);
+        eastWest.rotation.x = -Math.PI / 2;
+        eastWest.position.y = 0.02;
+        group.add(eastWest);
+
+        const northSouth = new THREE.Mesh(new THREE.PlaneGeometry(roadWidth, roadLength), roadMat);
+        northSouth.rotation.x = -Math.PI / 2;
+        northSouth.position.y = 0.02;
+        group.add(northSouth);
+
+        return group;
+    }
+
+    createCanal(length, width) {
+        const group = new THREE.Group();
+
+        const waterGeo = new THREE.PlaneGeometry(length, width);
+        const waterMat = new THREE.MeshStandardMaterial({
+            color: 0x1E90FF,
+            transparent: true,
+            opacity: 0.7,
+            metalness: 0.3,
+            roughness: 0.2
+        });
+        const water = new THREE.Mesh(waterGeo, waterMat);
+        water.rotation.x = -Math.PI / 2;
+        water.position.y = 0.05;
+        group.add(water);
+
+        const bankGeo = new THREE.BoxGeometry(length, 1.2, 2);
+        const bankMat = new THREE.MeshStandardMaterial({
+            color: 0xA9A9A9,
+            roughness: 0.9
+        });
+        const northBank = new THREE.Mesh(bankGeo, bankMat);
+        northBank.position.set(0, 0.6, width / 2 + 1);
+        northBank.castShadow = true;
+        group.add(northBank);
+
+        const southBank = new THREE.Mesh(bankGeo, bankMat);
+        southBank.position.set(0, 0.6, -width / 2 - 1);
+        southBank.castShadow = true;
+        group.add(southBank);
+
+        const bridgeOffsets = [-length * 0.3, 0, length * 0.3];
+        bridgeOffsets.forEach(offset => {
+            const bridge = this.createBridge(width + 4);
+            bridge.position.set(offset, 0, 0);
+            group.add(bridge);
+        });
+
+        for (let i = 0; i < 6; i++) {
+            const dock = this.createDock();
+            const x = (-length / 2 + 12) + Math.random() * (length - 24);
+            const z = Math.random() > 0.5 ? width / 2 + 3.5 : -width / 2 - 3.5;
+            dock.position.set(x, 0, z);
+            dock.rotation.y = Math.random() * Math.PI * 2;
+            group.add(dock);
+        }
+
+        for (let i = 0; i < 6; i++) {
+            const ship = this.createShip();
+            const x = (-length / 2 + 10) + Math.random() * (length - 20);
+            const z = (Math.random() > 0.5 ? 1 : -1) * (width * 0.25);
+            ship.position.set(x, 0.1, z);
+            ship.rotation.y = Math.random() * Math.PI * 2;
+            group.add(ship);
+        }
+
+        return group;
+    }
+
+    createBridge(width) {
+        const group = new THREE.Group();
+        const deckMat = new THREE.MeshStandardMaterial({
+            color: 0x8B6B4A,
+            roughness: 0.9
+        });
+        const railMat = new THREE.MeshStandardMaterial({
+            color: 0x4E3620,
+            roughness: 0.9
+        });
+
+        const deckGeo = new THREE.BoxGeometry(width, 0.5, 6);
+        const deck = new THREE.Mesh(deckGeo, deckMat);
+        deck.position.y = 0.6;
+        deck.castShadow = true;
+        group.add(deck);
+
+        const railGeo = new THREE.BoxGeometry(width, 0.6, 0.3);
+        const railFront = new THREE.Mesh(railGeo, railMat);
+        railFront.position.set(0, 1.1, 2.8);
+        group.add(railFront);
+
+        const railBack = new THREE.Mesh(railGeo, railMat);
+        railBack.position.set(0, 1.1, -2.8);
+        group.add(railBack);
+
+        return group;
+    }
+
+    createDock() {
+        const group = new THREE.Group();
+        const deckMat = new THREE.MeshStandardMaterial({
+            color: 0x8B6B4A,
+            roughness: 0.9
+        });
+        const postMat = new THREE.MeshStandardMaterial({
+            color: 0x4E3620,
+            roughness: 0.9
+        });
+
+        const deckGeo = new THREE.BoxGeometry(6, 0.3, 3);
+        const deck = new THREE.Mesh(deckGeo, deckMat);
+        deck.position.y = 0.2;
+        deck.castShadow = true;
+        group.add(deck);
+
+        const postGeo = new THREE.CylinderGeometry(0.1, 0.1, 1.2, 6);
+        for (let i = 0; i < 4; i++) {
+            const post = new THREE.Mesh(postGeo, postMat);
+            post.position.set(i < 2 ? -2.5 : 2.5, 0.6, i % 2 === 0 ? -1 : 1);
+            post.castShadow = true;
+            group.add(post);
+        }
+
+        return group;
+    }
+
+    createShip() {
+        const group = new THREE.Group();
+        const hullMat = new THREE.MeshStandardMaterial({
+            color: 0x7B4A12,
+            roughness: 0.8
+        });
+        const sailMat = new THREE.MeshStandardMaterial({
+            color: 0xF5F5DC,
+            side: THREE.DoubleSide,
+            roughness: 0.8
+        });
+        const mastMat = new THREE.MeshStandardMaterial({
+            color: 0x5A3B2E,
+            roughness: 0.9
+        });
+
+        const hullGeo = new THREE.BoxGeometry(6, 1, 2);
+        const hull = new THREE.Mesh(hullGeo, hullMat);
+        hull.position.y = 0.6;
+        hull.castShadow = true;
+        group.add(hull);
+
+        const bowGeo = new THREE.ConeGeometry(1, 2, 6);
+        const bow = new THREE.Mesh(bowGeo, hullMat);
+        bow.position.set(3.5, 0.6, 0);
+        bow.rotation.z = Math.PI / 2;
+        bow.castShadow = true;
+        group.add(bow);
+
+        const mastGeo = new THREE.CylinderGeometry(0.1, 0.1, 4, 6);
+        const mast = new THREE.Mesh(mastGeo, mastMat);
+        mast.position.y = 2.6;
+        group.add(mast);
+
+        const sailGeo = new THREE.PlaneGeometry(2.4, 2.2);
+        const sail = new THREE.Mesh(sailGeo, sailMat);
+        sail.position.set(0, 2.6, 0.8);
+        group.add(sail);
+
+        return group;
+    }
+
+    createMarketStalls(count, bounds) {
+        const group = new THREE.Group();
+
+        for (let i = 0; i < count; i++) {
+            const stall = this.createMarketStall();
+            const x = bounds.minX + Math.random() * (bounds.maxX - bounds.minX);
+            const z = bounds.minZ + Math.random() * (bounds.maxZ - bounds.minZ);
+            stall.position.set(x, 0, z);
+            stall.rotation.y = Math.random() * Math.PI * 2;
+            group.add(stall);
+        }
+
+        return group;
+    }
+
+    createMarketStall() {
+        const group = new THREE.Group();
+        const woodMat = new THREE.MeshStandardMaterial({
+            color: 0x8B6B4A,
+            roughness: 0.9
+        });
+        const clothMat = new THREE.MeshStandardMaterial({
+            color: 0xFFD700,
+            roughness: 0.8
+        });
+
+        const tableGeo = new THREE.BoxGeometry(2, 0.3, 1);
+        const table = new THREE.Mesh(tableGeo, woodMat);
+        table.position.y = 0.6;
+        table.castShadow = true;
+        group.add(table);
+
+        const postGeo = new THREE.CylinderGeometry(0.07, 0.07, 1.5, 6);
+        for (let i = 0; i < 4; i++) {
+            const post = new THREE.Mesh(postGeo, woodMat);
+            post.position.set(i < 2 ? -0.9 : 0.9, 1.1, i % 2 === 0 ? -0.4 : 0.4);
+            post.castShadow = true;
+            group.add(post);
+        }
+
+        const canopyGeo = new THREE.PlaneGeometry(2.4, 1.4);
+        const canopy = new THREE.Mesh(canopyGeo, clothMat);
+        canopy.rotation.x = -Math.PI / 2;
+        canopy.position.y = 1.8;
+        group.add(canopy);
+
+        return group;
+    }
+
+    createMonument() {
+        const group = new THREE.Group();
+        const stoneMat = new THREE.MeshStandardMaterial({
+            color: 0xC0C0C0,
+            roughness: 0.8
+        });
+        const bronzeMat = new THREE.MeshStandardMaterial({
+            color: 0xCD7F32,
+            metalness: 0.6,
+            roughness: 0.4
+        });
+
+        const baseGeo = new THREE.CylinderGeometry(3, 3.4, 1, 12);
+        const base = new THREE.Mesh(baseGeo, stoneMat);
+        base.position.y = 0.5;
+        base.castShadow = true;
+        group.add(base);
+
+        const pillarGeo = new THREE.CylinderGeometry(0.9, 1.1, 4, 10);
+        const pillar = new THREE.Mesh(pillarGeo, stoneMat);
+        pillar.position.y = 3;
+        pillar.castShadow = true;
+        group.add(pillar);
+
+        const statueGeo = new THREE.CylinderGeometry(0.5, 0.7, 2.5, 8);
+        const statue = new THREE.Mesh(statueGeo, bronzeMat);
+        statue.position.y = 5.2;
+        statue.castShadow = true;
+        group.add(statue);
+
+        const headGeo = new THREE.SphereGeometry(0.5, 8, 8);
+        const head = new THREE.Mesh(headGeo, bronzeMat);
+        head.position.y = 6.8;
+        group.add(head);
+
+        return group;
+    }
+
+    createBackgroundHills(radius, count) {
+        const group = new THREE.Group();
+        const hillMat = new THREE.MeshStandardMaterial({
+            color: 0x3B5A3B,
+            roughness: 0.9
+        });
+
+        for (let i = 0; i < count; i++) {
+            const size = 18 + Math.random() * 16;
+            const hillGeo = new THREE.SphereGeometry(size, 10, 10);
+            const hill = new THREE.Mesh(hillGeo, hillMat);
+            const angle = (i / count) * Math.PI * 2;
+            const spread = radius + Math.random() * 25;
+            hill.position.set(
+                Math.cos(angle) * spread,
+                -10 + Math.random() * 4,
+                Math.sin(angle) * spread
+            );
+            hill.scale.y = 0.4 + Math.random() * 0.4;
+            hill.castShadow = true;
+            group.add(hill);
+        }
+
+        return group;
+    }
+
+    createRuinsField(areaSize, count) {
+        const group = new THREE.Group();
+        const half = areaSize / 2;
+        const stoneMat = new THREE.MeshStandardMaterial({
+            color: 0x8B8B8B,
+            roughness: 0.9
+        });
+        const rubbleMat = new THREE.MeshStandardMaterial({
+            color: 0x6E6E6E,
+            roughness: 0.9
+        });
+
+        for (let i = 0; i < count; i++) {
+            const x = (Math.random() * areaSize) - half;
+            const z = (Math.random() * areaSize) - half;
+            const roll = Math.random();
+
+            if (roll < 0.4) {
+                const wallGeo = new THREE.BoxGeometry(6 + Math.random() * 6, 1.5 + Math.random() * 2, 1);
+                const wall = new THREE.Mesh(wallGeo, stoneMat);
+                wall.position.set(x, 0.8, z);
+                wall.rotation.y = Math.random() * Math.PI;
+                wall.rotation.z = (Math.random() - 0.5) * 0.3;
+                wall.castShadow = true;
+                group.add(wall);
+            } else if (roll < 0.7) {
+                const columnGeo = new THREE.CylinderGeometry(0.5, 0.7, 4 + Math.random() * 3, 6);
+                const column = new THREE.Mesh(columnGeo, stoneMat);
+                column.position.set(x, 2.2, z);
+                column.rotation.z = (Math.random() - 0.5) * 0.4;
+                column.castShadow = true;
+                group.add(column);
+            } else {
+                const rubbleGeo = new THREE.DodecahedronGeometry(0.7 + Math.random() * 0.8, 0);
+                const rubble = new THREE.Mesh(rubbleGeo, rubbleMat);
+                rubble.position.set(x, 0.4, z);
+                rubble.rotation.set(
+                    Math.random() * Math.PI,
+                    Math.random() * Math.PI,
+                    Math.random() * Math.PI
+                );
+                rubble.castShadow = true;
+                group.add(rubble);
+            }
         }
 
         return group;
@@ -530,6 +1007,14 @@ class IntroSequence {
 
         // Create HUGE monsters attacking from outside
         this.createGiantMonstersAttacking();
+
+        const ruins = this.createRuinsField(140, 32);
+        if (this.empire) {
+            this.empire.add(ruins);
+        } else {
+            this.scene.add(ruins);
+            this.introObjects.push(ruins);
+        }
 
         // Camera pans to show scale
         this.animateCamera(
@@ -778,15 +1263,39 @@ class IntroSequence {
     createHouse() {
         const group = new THREE.Group();
 
-        // House walls
-        const wallGeo = new THREE.BoxGeometry(12, 6, 12);
+        // House floor and walls (open front)
         const wallMat = new THREE.MeshStandardMaterial({
             color: 0xD2B48C,
+            roughness: 0.9,
+            side: THREE.DoubleSide
+        });
+
+        const floorGeo = new THREE.BoxGeometry(12, 0.4, 12);
+        const floorMat = new THREE.MeshStandardMaterial({
+            color: 0xC2B280,
             roughness: 0.9
         });
-        const walls = new THREE.Mesh(wallGeo, wallMat);
-        walls.position.y = 3;
-        group.add(walls);
+        const floor = new THREE.Mesh(floorGeo, floorMat);
+        floor.position.y = 0.2;
+        floor.receiveShadow = true;
+        group.add(floor);
+
+        const backWallGeo = new THREE.BoxGeometry(12, 6, 0.4);
+        const backWall = new THREE.Mesh(backWallGeo, wallMat);
+        backWall.position.set(0, 3, -6);
+        backWall.castShadow = true;
+        group.add(backWall);
+
+        const sideWallGeo = new THREE.BoxGeometry(0.4, 6, 12);
+        const leftWall = new THREE.Mesh(sideWallGeo, wallMat);
+        leftWall.position.set(-6, 3, 0);
+        leftWall.castShadow = true;
+        group.add(leftWall);
+
+        const rightWall = new THREE.Mesh(sideWallGeo, wallMat);
+        rightWall.position.set(6, 3, 0);
+        rightWall.castShadow = true;
+        group.add(rightWall);
 
         // Roof
         const roofGeo = new THREE.ConeGeometry(9, 4, 4);
@@ -822,7 +1331,7 @@ class IntroSequence {
         guard.position.y = 0.2;
         swordGroup.add(guard);
 
-        swordGroup.position.set(0, 4, -5.5);
+        swordGroup.position.set(0, 3.8, -5.2);
         swordGroup.rotation.z = Math.PI / 6;
         group.add(swordGroup);
         this.oldSword = swordGroup;
