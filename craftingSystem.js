@@ -138,7 +138,7 @@ class CraftingSystem {
             },
             {
                 id: 'shadow_blade_e',
-                name: 'Shadow Blade E',
+                name: 'Shadow Blade EX',
                 tier: 5,
                 category: 'weapon',
                 requirements: {

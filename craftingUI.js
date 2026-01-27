@@ -266,7 +266,7 @@ class CraftingUI {
             'bronze_sword': 'Bronze Sword',
             'steel_sword': 'Steel Sword',
             'shadow_blade': 'Shadow Blade',
-            'shadow_blade_e': 'Shadow Blade E',
+            'shadow_blade_e': 'Shadow Blade EX',
             'frostforged_blade': 'Frostforged Blade',
             'verdant_reaver': 'Verdant Reaver',
             'crystal_arcblade': 'Crystal Arcblade'
