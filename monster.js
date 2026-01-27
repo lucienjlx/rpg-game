@@ -30,6 +30,7 @@ class Monster {
         this.detectionRange = 20 * (1 + (this.ferocity - 1) * 0.5);
 
         this.xpReward = 50; // Doubled from 25 for faster progression
+        this.isDead = false;
 
         // Create monster mesh
         this.createMesh(x, z);
@@ -311,6 +312,7 @@ class Monster {
     }
 
     takeDamage(amount) {
+        if (this.isDead) return;
         this.health -= amount;
 
         // Update health bar
@@ -333,6 +335,7 @@ class Monster {
     }
 
     die() {
+        this.isDead = true;
         // Monster is removed in game.js update loop
         // XP is awarded in combat.js
     }
