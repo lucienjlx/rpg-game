@@ -31,8 +31,9 @@ class CraftingUI {
                 <button class="tab-button active" data-tab="weapon">Weapons</button>
                 <button class="tab-button" data-tab="armor">Armor</button>
                 <button class="tab-button" data-tab="consumable">Consumables</button>
+                <button class="tab-button" data-tab="material">Materials</button>
             </div>
-            <div class="panel-hint">Arrows: select · Enter: craft · Left/Right: tab</div>
+            <div class="panel-hint">Arrows: select · Enter/C: craft · Left/Right: tab</div>
             <div class="panel-content" id="crafting-content">
                 <!-- Content will be dynamically generated -->
             </div>
@@ -111,6 +112,7 @@ class CraftingUI {
             }
 
             const statsHTML = this.getStatsHTML(recipe.result);
+            const formulaText = this.getRecipeFormula(recipe);
 
             recipeDiv.innerHTML = `
                 <div class="recipe-header">
@@ -118,12 +120,13 @@ class CraftingUI {
                     <span class="tier-badge">Tier ${recipe.tier}</span>
                 </div>
                 <div class="recipe-stats">${statsHTML}</div>
+                <div class="recipe-formula">${formulaText}</div>
                 <div class="recipe-requirements">
                     <h4>Requirements:</h4>
                     ${requirementsHTML}
                 </div>
                 <button class="craft-button" data-recipe="${recipe.id}" ${canCraft ? '' : 'disabled'}>
-                    ${canCraft ? 'Craft' : 'Missing Materials'}
+                    ${canCraft ? 'Craft (C)' : 'Missing Materials'}
                 </button>
             `;
 
@@ -164,7 +167,7 @@ class CraftingUI {
         if (!this.isOpen) return;
 
         const key = e.key.toLowerCase();
-        if (['arrowup', 'arrowdown', 'arrowleft', 'arrowright', 'enter'].includes(key)) {
+        if (['arrowup', 'arrowdown', 'arrowleft', 'arrowright', 'enter', 'c'].includes(key)) {
             e.preventDefault();
             e.stopPropagation();
         }
@@ -177,7 +180,7 @@ class CraftingUI {
             this.cycleCategory(-1);
         } else if (key === 'arrowright') {
             this.cycleCategory(1);
-        } else if (key === 'enter') {
+        } else if (key === 'enter' || key === 'c') {
             this.craftSelected();
         }
     }
@@ -190,10 +193,17 @@ class CraftingUI {
     }
 
     cycleCategory(direction) {
-        const categories = ['weapon', 'armor', 'consumable'];
+        const categories = ['weapon', 'armor', 'consumable', 'material'];
         const currentIndex = categories.indexOf(this.currentCategory);
         const nextIndex = (currentIndex + direction + categories.length) % categories.length;
         this.setCategory(categories[nextIndex]);
+    }
+
+    getRecipeFormula(recipe) {
+        const parts = Object.entries(recipe.requirements).map(([itemId, amount]) => {
+            return `${this.getItemName(itemId)} x${amount}`;
+        });
+        return `${parts.join(' + ')} => ${recipe.name}`;
     }
 
     craftSelected() {
@@ -222,11 +232,44 @@ class CraftingUI {
             'mithril_ore': 'Mithril Ore',
             'fire_essence': 'Fire Essence',
             'dark_essence': 'Dark Essence',
+            'life_essence': 'Life Essence',
+            'sand_essence': 'Sand Essence',
+            'ice_essence': 'Ice Essence',
+            'nature_essence': 'Nature Essence',
+            'arcane_essence': 'Arcane Essence',
+            'mystic_essence': 'Mystic Essence',
+            'cosmic_essence': 'Cosmic Essence',
+            'shadow_core': 'Shadow Core',
+            'frost_crystals': 'Frost Crystals',
+            'platinum_ore': 'Platinum Ore',
+            'corrupted_wood': 'Corrupted Wood',
+            'adamantite_ore': 'Adamantite Ore',
+            'crystal_shards': 'Crystal Shards',
+            'orichalcum_ore': 'Orichalcum Ore',
+            'mystic_petals': 'Mystic Petals',
+            'enchanted_ore': 'Enchanted Ore',
+            'void_fragments': 'Void Fragments',
+            'celestial_ore': 'Celestial Ore',
+            'plains_emblem': 'Plains Emblem',
+            'dune_sigil': 'Dune Sigil',
+            'shadow_sigil': 'Shadow Sigil',
+            'ember_heart': 'Ember Heart',
+            'frost_relic': 'Frost Relic',
+            'blight_seed': 'Blight Seed',
+            'crystal_prism': 'Crystal Prism',
+            'mystic_bloom': 'Mystic Bloom',
+            'void_relic': 'Void Relic',
             'health_potion_small': 'Small Health Potion',
             'health_potion_medium': 'Medium Health Potion',
+            'health_potion_large': 'Large Health Potion',
             'iron_sword': 'Iron Sword',
             'bronze_sword': 'Bronze Sword',
-            'steel_sword': 'Steel Sword'
+            'steel_sword': 'Steel Sword',
+            'shadow_blade': 'Shadow Blade',
+            'shadow_blade_e': 'Shadow Blade E',
+            'frostforged_blade': 'Frostforged Blade',
+            'verdant_reaver': 'Verdant Reaver',
+            'crystal_arcblade': 'Crystal Arcblade'
         };
         return names[itemId] || itemId;
     }

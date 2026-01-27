@@ -124,6 +124,92 @@ class CraftingSystem {
                 }
             },
             {
+                id: 'shadow_core',
+                name: 'Shadow Core',
+                tier: 4,
+                category: 'material',
+                requirements: {
+                    'dark_essence': 5
+                },
+                result: {
+                    type: 'material',
+                    rarity: 'rare'
+                }
+            },
+            {
+                id: 'shadow_blade_e',
+                name: 'Shadow Blade E',
+                tier: 5,
+                category: 'weapon',
+                requirements: {
+                    'shadow_blade': 1,
+                    'shadow_core': 1
+                },
+                result: {
+                    type: 'equipment',
+                    slot: 'weapon',
+                    stats: { damage: 130 },
+                    rarity: 'epic'
+                }
+            },
+            {
+                id: 'frostforged_blade',
+                name: 'Frostforged Blade',
+                tier: 6,
+                category: 'weapon',
+                requirements: {
+                    'frost_crystals': 25,
+                    'platinum_ore': 15,
+                    'ice_essence': 6,
+                    'frost_relic': 1,
+                    'shadow_blade_e': 1
+                },
+                result: {
+                    type: 'equipment',
+                    slot: 'weapon',
+                    stats: { damage: 170 },
+                    rarity: 'epic'
+                }
+            },
+            {
+                id: 'verdant_reaver',
+                name: 'Verdant Reaver',
+                tier: 7,
+                category: 'weapon',
+                requirements: {
+                    'corrupted_wood': 30,
+                    'adamantite_ore': 18,
+                    'nature_essence': 7,
+                    'blight_seed': 1,
+                    'frostforged_blade': 1
+                },
+                result: {
+                    type: 'equipment',
+                    slot: 'weapon',
+                    stats: { damage: 220 },
+                    rarity: 'epic'
+                }
+            },
+            {
+                id: 'crystal_arcblade',
+                name: 'Crystal Arcblade',
+                tier: 8,
+                category: 'weapon',
+                requirements: {
+                    'crystal_shards': 35,
+                    'orichalcum_ore': 20,
+                    'arcane_essence': 8,
+                    'crystal_prism': 1,
+                    'verdant_reaver': 1
+                },
+                result: {
+                    type: 'equipment',
+                    slot: 'weapon',
+                    stats: { damage: 280 },
+                    rarity: 'epic'
+                }
+            },
+            {
                 id: 'shadow_armor',
                 name: 'Shadow Armor',
                 tier: 4,
@@ -194,6 +280,11 @@ class CraftingSystem {
         // Add to inventory
         if (recipe.result.type === 'equipment') {
             inventory.addEquipment(resultItem);
+        } else if (recipe.result.type === 'material') {
+            inventory.addItem(recipe.id, {
+                name: recipe.name,
+                rarity: recipe.result.rarity
+            });
         } else if (recipe.result.type === 'consumable') {
             inventory.addItem(recipe.id, {
                 name: recipe.name,

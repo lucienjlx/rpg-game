@@ -139,6 +139,15 @@ function init() {
             }
         }
 
+        // Toggle crafting with 'C' key
+        if (e.key.toLowerCase() === 'c') {
+            if (game.player && game.player.craftingUI && game.gameStarted) {
+                if (!game.player.craftingUI.isOpen) {
+                    game.player.craftingUI.open();
+                }
+            }
+        }
+
         // Interact with Smith with 'E' key
         if (e.key.toLowerCase() === 'e') {
             if (game.player && game.smith && game.player.craftingUI && game.gameStarted) {
