@@ -1,14 +1,16 @@
 class BossMonster extends Monster {
     constructor(scene, x, z, zoneConfig) {
         super(scene, x, z);
+        const bossConfig = zoneConfig.bossConfig || {};
 
         // Override stats with boss configuration
-        this.maxHealth = zoneConfig.bossConfig.health;
-        this.health = zoneConfig.bossConfig.health;
-        this.damage = zoneConfig.bossConfig.damage;
-        this.xpReward = 250; // Increased from 125 for faster progression
-        this.color = zoneConfig.bossConfig.color;
-        this.ferocity = zoneConfig.bossConfig.ferocity || 1.5;
+        this.maxHealth = bossConfig.health;
+        this.health = bossConfig.health;
+        this.damage = bossConfig.damage;
+        this.xpReward = bossConfig.xpReward ?? bossConfig.xp ?? 250;
+        this.color = bossConfig.color;
+        this.ferocity = bossConfig.ferocity || 1.5;
+        this.attackCooldown = 0;
 
         // Apply ferocity to behavior stats
         this.speed = 2 * this.ferocity;
@@ -16,9 +18,15 @@ class BossMonster extends Monster {
         this.detectionRange = 20 * (1 + (this.ferocity - 1) * 0.5);
 
         // Boss-specific properties
+        this.bossName = bossConfig.name || 'Unknown Horror';
         this.areaAttackCooldown = 0;
         this.areaAttackCooldownTime = 5;
         this.areaAttackRange = 5;
+        this.areaAttackWindupTime = 0.45;
+        this.pendingAreaAttack = false;
+        this.pendingAreaAttackElapsed = 0;
+        this.pendingAreaAttackRing = null;
+        this.elapsedTime = 0;
         this.isBoss = true;
 
         // Recreate mesh with boss appearance
@@ -205,17 +213,18 @@ class BossMonster extends Monster {
         if (this.areaAttackCooldown > 0) {
             this.areaAttackCooldown -= delta;
         }
+        this.elapsedTime += delta;
 
         // Animate aura (pulsing effect)
         if (this.aura) {
-            const time = Date.now() * 0.001;
+            const time = this.elapsedTime;
             this.aura.material.opacity = 0.2 + Math.sin(time * 2) * 0.1;
             this.aura.rotation.z += delta * 0.5;
         }
 
         // Animate particles (orbiting around boss)
         if (this.particles) {
-            const time = Date.now() * 0.001;
+            const time = this.elapsedTime;
             this.particles.forEach(particle => {
                 particle.userData.angle += delta * particle.userData.speed;
                 particle.position.x = Math.cos(particle.userData.angle) * particle.userData.radius;
@@ -229,7 +238,21 @@ class BossMonster extends Monster {
 
         if (!player || player.health <= 0) return;
 
-        // Check for area attack
+        if (this.pendingAreaAttack) {
+            this.pendingAreaAttackElapsed += delta;
+            this.updateAreaAttackTelegraph();
+
+            if (this.pendingAreaAttackElapsed >= this.areaAttackWindupTime) {
+                this.resolveAreaAttack(player, wallSystem);
+            }
+        } else if (this.areaAttackCooldown <= 0 && this.isTargetInAreaRange(player, wallSystem)) {
+            this.startAreaAttack();
+        }
+    }
+
+    isTargetInAreaRange(player, wallSystem = null) {
+        if (!player || !player.mesh) return false;
+
         const playerPos = player.mesh.position;
         const bossPos = this.mesh.position;
         const distance = Math.sqrt(
@@ -237,17 +260,77 @@ class BossMonster extends Monster {
             Math.pow(playerPos.z - bossPos.z, 2)
         );
 
-        // Perform area attack if player is in range and cooldown is ready
-        if (distance < this.areaAttackRange && this.areaAttackCooldown <= 0) {
-            this.performAreaAttack(player);
+        if (distance >= this.areaAttackRange) {
+            return false;
+        }
+
+        if (wallSystem && typeof wallSystem.hasLineOfSight === 'function') {
+            return wallSystem.hasLineOfSight(bossPos, playerPos);
+        }
+
+        return true;
+    }
+
+    startAreaAttack() {
+        this.areaAttackCooldown = this.areaAttackCooldownTime;
+        this.pendingAreaAttack = true;
+        this.pendingAreaAttackElapsed = 0;
+
+        if (!this.pendingAreaAttackRing) {
+            const ringGeometry = new THREE.RingGeometry(0.6, 1.2, 32);
+            const ringMaterial = new THREE.MeshBasicMaterial({
+                color: 0xff3333,
+                transparent: true,
+                opacity: 0.35,
+                side: THREE.DoubleSide
+            });
+            const ring = new THREE.Mesh(ringGeometry, ringMaterial);
+            ring.rotation.x = -Math.PI / 2;
+            ring.position.copy(this.mesh.position);
+            ring.position.y = 0.1;
+            this.scene.add(ring);
+            this.pendingAreaAttackRing = ring;
         }
     }
 
-    performAreaAttack(player) {
+    updateAreaAttackTelegraph() {
+        if (!this.pendingAreaAttackRing) return;
+
+        const progress = Math.min(this.pendingAreaAttackElapsed / this.areaAttackWindupTime, 1);
+        const scale = 1 + progress * 3.5;
+        this.pendingAreaAttackRing.scale.set(scale, scale, 1);
+        this.pendingAreaAttackRing.material.opacity = 0.35 * (1 - progress);
+        this.pendingAreaAttackRing.position.copy(this.mesh.position);
+        this.pendingAreaAttackRing.position.y = 0.1;
+    }
+
+    resolveAreaAttack(player, wallSystem = null) {
+        this.pendingAreaAttack = false;
+        this.pendingAreaAttackElapsed = 0;
+
+        if (this.pendingAreaAttackRing) {
+            this.scene.remove(this.pendingAreaAttackRing);
+            this.pendingAreaAttackRing = null;
+        }
+
+        if (!this.isTargetInAreaRange(player, wallSystem)) {
+            return;
+        }
+
         // Deal damage to player
         player.takeDamage(this.damage * 1.5); // Area attack does 1.5x damage
-        this.areaAttackCooldown = this.areaAttackCooldownTime;
 
+        this.createAreaAttackImpact();
+
+        // Visual feedback - boss pulses
+        const originalY = this.mesh.position.y;
+        this.mesh.position.y = originalY + 0.3;
+        setTimeout(() => {
+            this.mesh.position.y = originalY;
+        }, 100);
+    }
+
+    createAreaAttackImpact() {
         // Visual feedback - create expanding ring
         const ringGeometry = new THREE.RingGeometry(0.5, 1, 32);
         const ringMaterial = new THREE.MeshBasicMaterial({
@@ -281,13 +364,6 @@ class BossMonster extends Monster {
         };
 
         animate();
-
-        // Visual feedback - boss pulses
-        const originalY = this.mesh.position.y;
-        this.mesh.position.y = originalY + 0.3;
-        setTimeout(() => {
-            this.mesh.position.y = originalY;
-        }, 100);
     }
 
     attackPlayer(player) {

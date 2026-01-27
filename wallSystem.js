@@ -140,6 +140,56 @@ class WallSystem {
         return false;
     }
 
+    hasLineOfSight(from, to) {
+        for (let wall of this.walls) {
+            if (!wall.active) continue;
+
+            const halfWidth = wall.position.width / 2;
+            const halfDepth = wall.position.depth / 2;
+            const minX = wall.position.x - halfWidth;
+            const maxX = wall.position.x + halfWidth;
+            const minZ = wall.position.z - halfDepth;
+            const maxZ = wall.position.z + halfDepth;
+
+            if (this.segmentIntersectsRect(from, to, minX, maxX, minZ, maxZ)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    segmentIntersectsRect(from, to, minX, maxX, minZ, maxZ) {
+        const dx = to.x - from.x;
+        const dz = to.z - from.z;
+        const p = [-dx, dx, -dz, dz];
+        const q = [from.x - minX, maxX - from.x, from.z - minZ, maxZ - from.z];
+
+        let t0 = 0;
+        let t1 = 1;
+        const epsilon = 1e-8;
+
+        for (let i = 0; i < 4; i++) {
+            if (Math.abs(p[i]) < epsilon) {
+                if (q[i] < 0) {
+                    return false;
+                }
+                continue;
+            }
+
+            const r = q[i] / p[i];
+            if (p[i] < 0) {
+                if (r > t1) return false;
+                if (r > t0) t0 = r;
+            } else {
+                if (r < t0) return false;
+                if (r < t1) t1 = r;
+            }
+        }
+
+        return true;
+    }
+
     removeWall(wallIndex, scene) {
         if (wallIndex < 0 || wallIndex >= this.walls.length) return;
 
