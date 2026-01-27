@@ -9,11 +9,17 @@ class IntroSequence {
         this.introObjects = [];
         this.fallingLight = null;
         this.shimmerParticles = null;
+        this.time = 0;
+        this.lastFrameTime = 0;
+        this.ticking = false;
     }
 
     start(onComplete) {
         this.isPlaying = true;
         this.onComplete = onComplete;
+        this.time = 0;
+        this.lastFrameTime = performance.now();
+        this.startClock();
 
         // Hide game UI during intro
         document.getElementById('ui-overlay').style.display = 'none';
@@ -82,7 +88,7 @@ class IntroSequence {
             textElement.style.opacity = '0';
             setTimeout(() => {
                 document.body.removeChild(textElement);
-                if (callback) callback();
+                if (callback && this.isPlaying) callback();
             }, 1000);
         }, duration - 1000);
     }
@@ -208,7 +214,7 @@ class IntroSequence {
         // Animate aura pulsing
         const animateAura = () => {
             if (!this.isPlaying || !this.magicalAura) return;
-            const time = Date.now() * 0.001;
+            const time = this.time * 0.001;
             this.magicalAura.scale.set(
                 1 + Math.sin(time * 2) * 0.3,
                 1 + Math.sin(time * 2) * 0.3,
@@ -842,11 +848,11 @@ class IntroSequence {
         if (this.oldSword) {
             const startZ = this.oldSword.position.z;
             const duration = 1000;
-            const startTime = Date.now();
+            const startTime = this.time;
 
             const animate = () => {
                 if (!this.isPlaying) return;
-                const elapsed = Date.now() - startTime;
+                const elapsed = this.time - startTime;
                 const progress = Math.min(elapsed / duration, 1);
 
                 this.oldSword.position.z = startZ + progress * 10;
@@ -950,14 +956,14 @@ class IntroSequence {
 
         this.showText('He leaped, his body shattered into light...', 3000);
 
-        const startTime = Date.now();
+        const startTime = this.time;
         const duration = 1800;
         const startY = 20;
         const endY = 1.5;
 
         const animate = () => {
             if (!this.isPlaying) return;
-            const elapsed = Date.now() - startTime;
+            const elapsed = this.time - startTime;
             const progress = Math.min(elapsed / duration, 1);
             const eased = 1 - Math.pow(1 - progress, 2);
 
@@ -1018,11 +1024,11 @@ class IntroSequence {
         this.scene.add(ring);
         this.introObjects.push(ring);
 
-        const startTime = Date.now();
+        const startTime = this.time;
         const duration = 800;
         const animate = () => {
             if (!this.isPlaying) return;
-            const elapsed = Date.now() - startTime;
+            const elapsed = this.time - startTime;
             const progress = Math.min(elapsed / duration, 1);
 
             const scale = 1 + progress * 3;
@@ -1135,11 +1141,11 @@ class IntroSequence {
             y: this.camera.position.y,
             z: this.camera.position.z
         };
-        const startTime = Date.now();
+        const startTime = this.time;
 
         const animate = () => {
             if (!this.isPlaying) return;
-            const elapsed = Date.now() - startTime;
+            const elapsed = this.time - startTime;
             const progress = Math.min(elapsed / duration, 1);
 
             this.camera.position.x = startPos.x + (targetPos.x - startPos.x) * progress;
@@ -1157,6 +1163,20 @@ class IntroSequence {
     clearScene() {
         // Remove all intro objects
         this.introObjects.forEach(obj => {
+            if (obj.traverse) {
+                obj.traverse(child => {
+                    if (child.geometry) {
+                        child.geometry.dispose();
+                    }
+                    if (child.material) {
+                        if (Array.isArray(child.material)) {
+                            child.material.forEach(material => material.dispose());
+                        } else {
+                            child.material.dispose();
+                        }
+                    }
+                });
+            }
             this.scene.remove(obj);
         });
         this.introObjects = [];
@@ -1190,5 +1210,29 @@ class IntroSequence {
         if (this.onComplete) {
             this.onComplete();
         }
+    }
+
+    startClock() {
+        if (this.ticking) return;
+        this.ticking = true;
+
+        const tick = (now) => {
+            if (!this.isPlaying) {
+                this.ticking = false;
+                return;
+            }
+
+            if (!this.lastFrameTime) {
+                this.lastFrameTime = now;
+            }
+
+            const delta = now - this.lastFrameTime;
+            this.lastFrameTime = now;
+            this.time += delta;
+
+            requestAnimationFrame(tick);
+        };
+
+        requestAnimationFrame(tick);
     }
 }
