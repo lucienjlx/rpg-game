@@ -40,6 +40,9 @@ function performAttack() {
             if (monster.health <= 0) {
                 game.player.gainXP(monster.xpReward);
                 createDeathParticles(monsterPos);
+
+                // Drop loot
+                dropLoot(monster, monsterPos);
             }
         }
     });
@@ -136,3 +139,31 @@ function calculateDamage(baseDamage) {
     const max = baseDamage * (1 + variance);
     return Math.floor(Math.random() * (max - min + 1) + min);
 }
+
+// Drop loot when monster dies
+function dropLoot(monster, position) {
+    if (!game.lootSystem || !game.zoneSystem) return;
+
+    // Determine which zone the monster was in
+    const currentZone = game.zoneSystem.getCurrentZone(position);
+    const isBoss = monster.constructor.name === 'BossMonster';
+
+    // Generate loot drops
+    const drops = game.lootSystem.generateLoot(currentZone.id, isBoss);
+
+    // Create loot items in the world
+    drops.forEach(itemId => {
+        const lootData = game.lootSystem.getLootData(itemId);
+        if (lootData) {
+            const loot = new LootItem(
+                game.scene,
+                position.x + (Math.random() - 0.5) * 2,
+                position.z + (Math.random() - 0.5) * 2,
+                itemId,
+                lootData
+            );
+            game.lootItems.push(loot);
+        }
+    });
+}
+

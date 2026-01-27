@@ -1,85 +1,245 @@
 class ZoneSystem {
     constructor() {
+        // 9-zone layout in 3x3 grid with varied shapes:
+        // [7]-[8]-[9]
+        //  |   |   |
+        // [4]-[5]-[6]
+        //  |   |   |
+        // [1]-[2]-[3]
         this.zones = [
             {
                 id: 1,
                 name: "Green Plains",
-                bounds: { minX: -50, maxX: 0, minZ: -25, maxZ: 25 },
+                shape: "square", // Square starting area
+                bounds: { minX: -75, maxX: -25, minZ: -75, maxZ: -25 },
+                centerX: -50,
+                centerZ: -50,
+                radius: 25,
                 groundColor: 0x228b22,
                 monsterConfig: {
                     color: 0x8b0000,
-                    scale: 1.0,
+                    ferocity: 1.0,
                     health: 50,
-                    damage: 5
+                    damage: 5,
+                    zoneId: 1
                 },
                 bossConfig: {
                     color: 0x8b0000,
-                    scale: 3.0,
+                    ferocity: 1.5,
                     health: 250,
                     damage: 15
                 },
                 unlocked: true,
-                unlockThreshold: 0
+                unlockThreshold: 0,
+                connections: [2, 4] // Connects to Desert and Volcanic
             },
             {
                 id: 2,
                 name: "Desert Wastes",
-                bounds: { minX: 0, maxX: 50, minZ: -25, maxZ: 25 },
+                shape: "square", // Square hub
+                bounds: { minX: -25, maxX: 25, minZ: -75, maxZ: -25 },
+                centerX: 0,
+                centerZ: -50,
+                radius: 25,
                 groundColor: 0xdaa520,
                 monsterConfig: {
                     color: 0xd2691e,
-                    scale: 1.2,
+                    ferocity: 1.5,
                     health: 100,
-                    damage: 10
+                    damage: 10,
+                    zoneId: 2
                 },
                 bossConfig: {
                     color: 0xd2691e,
-                    scale: 3.6,
+                    ferocity: 2.0,
                     health: 500,
                     damage: 30
                 },
                 unlocked: false,
-                unlockThreshold: 50
+                unlockThreshold: 50,
+                connections: [1, 3, 5] // Connects to Green Plains, Shadow, Frozen
             },
             {
                 id: 3,
-                name: "Volcanic Lands",
-                bounds: { minX: 50, maxX: 100, minZ: -25, maxZ: 25 },
-                groundColor: 0xff4500,
-                monsterConfig: {
-                    color: 0xff4500,
-                    scale: 1.4,
-                    health: 200,
-                    damage: 20
-                },
-                bossConfig: {
-                    color: 0xff4500,
-                    scale: 4.2,
-                    health: 1000,
-                    damage: 60
-                },
-                unlocked: false,
-                unlockThreshold: 100
-            },
-            {
-                id: 4,
                 name: "Shadow Realm",
-                bounds: { minX: 100, maxX: 150, minZ: -25, maxZ: 25 },
+                shape: "square", // Square dark zone
+                bounds: { minX: 25, maxX: 75, minZ: -75, maxZ: -25 },
+                centerX: 50,
+                centerZ: -50,
+                radius: 25,
                 groundColor: 0x4b0082,
                 monsterConfig: {
                     color: 0x4b0082,
-                    scale: 1.6,
+                    ferocity: 3.0,
                     health: 400,
-                    damage: 40
+                    damage: 40,
+                    zoneId: 3
                 },
                 bossConfig: {
                     color: 0x4b0082,
-                    scale: 4.8,
+                    ferocity: 3.5,
                     health: 2000,
                     damage: 120
                 },
                 unlocked: false,
-                unlockThreshold: 200
+                unlockThreshold: 200,
+                connections: [2, 6] // Connects to Desert and Corrupted Forest
+            },
+            {
+                id: 4,
+                name: "Volcanic Lands",
+                shape: "square", // Square volcanic zone
+                bounds: { minX: -75, maxX: -25, minZ: -25, maxZ: 25 },
+                centerX: -50,
+                centerZ: 0,
+                radius: 25,
+                groundColor: 0xff4500,
+                monsterConfig: {
+                    color: 0xff4500,
+                    ferocity: 2.0,
+                    health: 200,
+                    damage: 20,
+                    zoneId: 4
+                },
+                bossConfig: {
+                    color: 0xff4500,
+                    ferocity: 2.5,
+                    health: 1000,
+                    damage: 60
+                },
+                unlocked: false,
+                unlockThreshold: 100,
+                connections: [1, 5, 7] // Connects to Green Plains, Frozen, Crystal
+            },
+            {
+                id: 5,
+                name: "Frozen Tundra",
+                shape: "square", // Square center hub
+                bounds: { minX: -25, maxX: 25, minZ: -25, maxZ: 25 },
+                centerX: 0,
+                centerZ: 0,
+                radius: 25,
+                groundColor: 0xE0FFFF,
+                monsterConfig: {
+                    color: 0x00CED1,
+                    ferocity: 2.0,
+                    health: 800,
+                    damage: 80,
+                    zoneId: 5
+                },
+                bossConfig: {
+                    color: 0x00CED1,
+                    ferocity: 3.0,
+                    health: 4000,
+                    damage: 240
+                },
+                unlocked: false,
+                unlockThreshold: 300,
+                connections: [2, 4, 6, 8] // Central hub: connects to Desert, Volcanic, Forest, Mystic
+            },
+            {
+                id: 6,
+                name: "Corrupted Forest",
+                shape: "square", // Square corrupted zone
+                bounds: { minX: 25, maxX: 75, minZ: -25, maxZ: 25 },
+                centerX: 50,
+                centerZ: 0,
+                radius: 25,
+                groundColor: 0x2F4F2F,
+                monsterConfig: {
+                    color: 0x556B2F,
+                    ferocity: 2.5,
+                    health: 1600,
+                    damage: 160,
+                    zoneId: 6
+                },
+                bossConfig: {
+                    color: 0x556B2F,
+                    ferocity: 3.5,
+                    health: 8000,
+                    damage: 480
+                },
+                unlocked: false,
+                unlockThreshold: 450,
+                connections: [3, 5, 9] // Connects to Shadow, Frozen, Void
+            },
+            {
+                id: 7,
+                name: "Crystal Caverns",
+                shape: "square", // Square crystal zone
+                bounds: { minX: -75, maxX: -25, minZ: 25, maxZ: 75 },
+                centerX: -50,
+                centerZ: 50,
+                radius: 25,
+                groundColor: 0x9370DB,
+                monsterConfig: {
+                    color: 0x8A2BE2,
+                    ferocity: 3.0,
+                    health: 3200,
+                    damage: 320,
+                    zoneId: 7
+                },
+                bossConfig: {
+                    color: 0x8A2BE2,
+                    ferocity: 4.0,
+                    health: 16000,
+                    damage: 960
+                },
+                unlocked: false,
+                unlockThreshold: 650,
+                connections: [4, 8] // Connects to Volcanic and Mystic
+            },
+            {
+                id: 8,
+                name: "Mystic Gardens",
+                shape: "square", // Square mystical zone
+                bounds: { minX: -25, maxX: 25, minZ: 25, maxZ: 75 },
+                centerX: 0,
+                centerZ: 50,
+                radius: 25,
+                groundColor: 0xFF69B4, // Hot pink/magenta for mystical feel
+                monsterConfig: {
+                    color: 0xFF1493,
+                    ferocity: 3.5,
+                    health: 5000,
+                    damage: 500,
+                    zoneId: 8
+                },
+                bossConfig: {
+                    color: 0xFF1493,
+                    ferocity: 4.5,
+                    health: 25000,
+                    damage: 1500
+                },
+                unlocked: false,
+                unlockThreshold: 800,
+                connections: [5, 7, 9] // Connects to Frozen, Crystal, Void
+            },
+            {
+                id: 9,
+                name: "Void Nexus",
+                shape: "square", // Square void zone
+                bounds: { minX: 25, maxX: 75, minZ: 25, maxZ: 75 },
+                centerX: 50,
+                centerZ: 50,
+                radius: 25,
+                groundColor: 0x000033,
+                monsterConfig: {
+                    color: 0x1C1C1C,
+                    ferocity: 4.0,
+                    health: 6400,
+                    damage: 640,
+                    zoneId: 9
+                },
+                bossConfig: {
+                    color: 0x1C1C1C,
+                    ferocity: 5.0,
+                    health: 32000,
+                    damage: 1920
+                },
+                unlocked: false,
+                unlockThreshold: 1000,
+                connections: [6, 8] // Connects to Forest and Mystic
             }
         ];
 
@@ -131,13 +291,19 @@ class ZoneSystem {
 
         // Show message
         if (game.showMessage) {
-            game.showMessage("You have grown powerful! The path forward opens...");
+            showMessage(`New area unlocked: ${zone.name}!`, 3000);
         }
 
-        // Remove wall
-        const wallIndex = zone.id - 2; // Wall 0 is between zones 1 and 2
-        if (wallIndex >= 0 && game.wallSystem) {
-            game.wallSystem.removeWall(wallIndex, game.scene);
+        // Remove walls connected to this zone
+        if (game.wallSystem) {
+            // Find all zones connected to the newly unlocked zone
+            zone.connections.forEach(connectedId => {
+                const connectedZone = this.zones.find(z => z.id === connectedId);
+                if (connectedZone && connectedZone.unlocked) {
+                    // Remove wall between this zone and the connected zone
+                    game.wallSystem.removeWallBetweenZones(zone.id, connectedId, game.scene);
+                }
+            });
         }
 
         // Clear fog
@@ -155,6 +321,7 @@ class ZoneSystem {
         const grounds = [];
 
         for (let zone of this.zones) {
+            // Use full square grounds so zones connect without gaps.
             const width = zone.bounds.maxX - zone.bounds.minX;
             const depth = zone.bounds.maxZ - zone.bounds.minZ;
             const centerX = (zone.bounds.minX + zone.bounds.maxX) / 2;
@@ -179,19 +346,17 @@ class ZoneSystem {
     }
 
     getZoneForSpawning(playerZone) {
-        // Spawn monsters in the current zone or adjacent unlocked zones
+        // Spawn monsters in the current zone or connected unlocked zones
         const zones = [playerZone];
 
-        // Add previous zone if unlocked
-        const prevZone = this.zones.find(z => z.id === playerZone.id - 1);
-        if (prevZone && prevZone.unlocked) {
-            zones.push(prevZone);
-        }
-
-        // Add next zone if unlocked
-        const nextZone = this.zones.find(z => z.id === playerZone.id + 1);
-        if (nextZone && nextZone.unlocked) {
-            zones.push(nextZone);
+        // Add connected zones if unlocked
+        if (playerZone.connections) {
+            playerZone.connections.forEach(connectedId => {
+                const connectedZone = this.zones.find(z => z.id === connectedId);
+                if (connectedZone && connectedZone.unlocked) {
+                    zones.push(connectedZone);
+                }
+            });
         }
 
         // Pick a random zone from available zones

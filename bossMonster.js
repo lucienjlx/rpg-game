@@ -8,7 +8,12 @@ class BossMonster extends Monster {
         this.damage = zoneConfig.bossConfig.damage;
         this.xpReward = 250; // Increased from 125 for faster progression
         this.color = zoneConfig.bossConfig.color;
-        this.scale = zoneConfig.bossConfig.scale;
+        this.ferocity = zoneConfig.bossConfig.ferocity || 1.5;
+
+        // Apply ferocity to behavior stats
+        this.speed = 2 * this.ferocity;
+        this.attackCooldownTime = 1.5 / this.ferocity;
+        this.detectionRange = 20 * (1 + (this.ferocity - 1) * 0.5);
 
         // Boss-specific properties
         this.areaAttackCooldown = 0;
@@ -25,87 +30,169 @@ class BossMonster extends Monster {
         // Create a group for the boss
         this.mesh = new THREE.Group();
 
-        // Create boss body (larger and colored based on zone)
-        const bodyGeometry = new THREE.BoxGeometry(1, 1.5, 1);
-        const bodyMaterial = new THREE.MeshStandardMaterial({ color: this.color });
+        // Create boss body (larger, more imposing, and colored based on zone)
+        const bodyGeometry = new THREE.BoxGeometry(1.5, 2.5, 1.5);
+        const bodyMaterial = new THREE.MeshStandardMaterial({
+            color: this.color,
+            metalness: 0.4,
+            roughness: 0.6,
+            emissive: this.color,
+            emissiveIntensity: 0.3
+        });
         const body = new THREE.Mesh(bodyGeometry, bodyMaterial);
-        body.position.y = 0.75;
+        body.position.y = 1.25;
         body.castShadow = true;
         this.mesh.add(body);
 
-        // Create head
-        const headGeometry = new THREE.SphereGeometry(0.5, 8, 8);
-        const headMaterial = new THREE.MeshStandardMaterial({ color: this.color });
+        // Create head (larger and more menacing)
+        const headGeometry = new THREE.SphereGeometry(0.7, 16, 16);
+        const headMaterial = new THREE.MeshStandardMaterial({
+            color: this.color,
+            metalness: 0.3,
+            roughness: 0.7,
+            emissive: this.color,
+            emissiveIntensity: 0.2
+        });
         const head = new THREE.Mesh(headGeometry, headMaterial);
-        head.position.y = 1.8;
+        head.position.y = 3;
         head.castShadow = true;
         this.mesh.add(head);
 
-        // Create golden crown
-        const crownGeometry = new THREE.CylinderGeometry(0.6, 0.5, 0.3, 8);
-        const crownMaterial = new THREE.MeshStandardMaterial({
-            color: 0xffd700,
+        // Create massive shoulders/pauldrons
+        const shoulderGeometry = new THREE.SphereGeometry(0.5, 8, 8);
+        const shoulderMaterial = new THREE.MeshStandardMaterial({
+            color: 0x2F4F4F,
             metalness: 0.8,
-            roughness: 0.2,
-            emissive: 0xffd700,
-            emissiveIntensity: 0.3
+            roughness: 0.3
+        });
+
+        const leftShoulder = new THREE.Mesh(shoulderGeometry, shoulderMaterial);
+        leftShoulder.position.set(-1, 2.2, 0);
+        leftShoulder.scale.set(1, 0.7, 1);
+        leftShoulder.castShadow = true;
+        this.mesh.add(leftShoulder);
+
+        const rightShoulder = new THREE.Mesh(shoulderGeometry, shoulderMaterial);
+        rightShoulder.position.set(1, 2.2, 0);
+        rightShoulder.scale.set(1, 0.7, 1);
+        rightShoulder.castShadow = true;
+        this.mesh.add(rightShoulder);
+
+        // Create golden crown (more elaborate)
+        const crownGeometry = new THREE.CylinderGeometry(0.8, 0.7, 0.4, 8);
+        const crownMaterial = new THREE.MeshStandardMaterial({
+            color: 0xFFD700,
+            metalness: 0.9,
+            roughness: 0.1,
+            emissive: 0xFFD700,
+            emissiveIntensity: 0.5
         });
         const crown = new THREE.Mesh(crownGeometry, crownMaterial);
-        crown.position.y = 2.4;
+        crown.position.y = 3.6;
         crown.castShadow = true;
         this.mesh.add(crown);
 
-        // Create crown spikes
-        const spikeGeometry = new THREE.ConeGeometry(0.1, 0.4, 4);
+        // Create crown spikes (larger and more dramatic)
+        const spikeGeometry = new THREE.ConeGeometry(0.15, 0.6, 4);
         const spikeMaterial = new THREE.MeshStandardMaterial({
-            color: 0xffd700,
-            metalness: 0.8,
-            roughness: 0.2
+            color: 0xFFD700,
+            metalness: 0.9,
+            roughness: 0.1,
+            emissive: 0xFFD700,
+            emissiveIntensity: 0.4
         });
 
         for (let i = 0; i < 8; i++) {
             const angle = (i / 8) * Math.PI * 2;
             const spike = new THREE.Mesh(spikeGeometry, spikeMaterial);
             spike.position.set(
-                Math.cos(angle) * 0.5,
-                2.6,
-                Math.sin(angle) * 0.5
+                Math.cos(angle) * 0.7,
+                3.9,
+                Math.sin(angle) * 0.7
             );
+            spike.castShadow = true;
             this.mesh.add(spike);
         }
 
-        // Create horns (larger than regular monsters)
-        const hornGeometry = new THREE.ConeGeometry(0.2, 0.7, 4);
-        const hornMaterial = new THREE.MeshStandardMaterial({ color: 0x000000 });
+        // Create massive horns (much larger than regular monsters)
+        const hornGeometry = new THREE.ConeGeometry(0.3, 1.2, 6);
+        const hornMaterial = new THREE.MeshStandardMaterial({
+            color: 0x1C1C1C,
+            metalness: 0.7,
+            roughness: 0.3
+        });
 
         const leftHorn = new THREE.Mesh(hornGeometry, hornMaterial);
-        leftHorn.position.set(-0.4, 2.5, 0);
-        leftHorn.rotation.z = -0.3;
+        leftHorn.position.set(-0.6, 3.8, 0);
+        leftHorn.rotation.z = -0.4;
+        leftHorn.castShadow = true;
         this.mesh.add(leftHorn);
 
         const rightHorn = new THREE.Mesh(hornGeometry, hornMaterial);
-        rightHorn.position.set(0.4, 2.5, 0);
-        rightHorn.rotation.z = 0.3;
+        rightHorn.position.set(0.6, 3.8, 0);
+        rightHorn.rotation.z = 0.4;
+        rightHorn.castShadow = true;
         this.mesh.add(rightHorn);
 
-        // Create eyes (glowing)
-        const eyeGeometry = new THREE.SphereGeometry(0.12, 8, 8);
+        // Create glowing eyes (much larger and more intense)
+        const eyeGeometry = new THREE.SphereGeometry(0.18, 16, 16);
+        const eyeColor = this.getEyeColorByFerocity();
         const eyeMaterial = new THREE.MeshStandardMaterial({
-            color: 0xff0000,
-            emissive: 0xff0000,
-            emissiveIntensity: 0.8
+            color: eyeColor,
+            emissive: eyeColor,
+            emissiveIntensity: 1.2 + (this.ferocity - 1) * 0.3
         });
 
         const leftEye = new THREE.Mesh(eyeGeometry, eyeMaterial);
-        leftEye.position.set(-0.2, 1.9, 0.4);
+        leftEye.position.set(-0.3, 3.1, 0.6);
         this.mesh.add(leftEye);
 
         const rightEye = new THREE.Mesh(eyeGeometry, eyeMaterial);
-        rightEye.position.set(0.2, 1.9, 0.4);
+        rightEye.position.set(0.3, 3.1, 0.6);
         this.mesh.add(rightEye);
 
-        // Scale the entire boss
-        this.mesh.scale.set(this.scale, this.scale, this.scale);
+        // Create aura effect (glowing ring around boss)
+        const auraGeometry = new THREE.RingGeometry(1.5, 2, 32);
+        const auraMaterial = new THREE.MeshBasicMaterial({
+            color: this.color,
+            transparent: true,
+            opacity: 0.3,
+            side: THREE.DoubleSide
+        });
+        const aura = new THREE.Mesh(auraGeometry, auraMaterial);
+        aura.rotation.x = -Math.PI / 2;
+        aura.position.y = 0.1;
+        this.mesh.add(aura);
+        this.aura = aura;
+
+        // Create particle effect around boss
+        const particleCount = 20;
+        const particleGeometry = new THREE.SphereGeometry(0.1, 4, 4);
+        const particleMaterial = new THREE.MeshBasicMaterial({
+            color: this.color,
+            transparent: true,
+            opacity: 0.6
+        });
+
+        this.particles = [];
+        for (let i = 0; i < particleCount; i++) {
+            const particle = new THREE.Mesh(particleGeometry, particleMaterial.clone());
+            const angle = (i / particleCount) * Math.PI * 2;
+            const radius = 2;
+            particle.position.set(
+                Math.cos(angle) * radius,
+                Math.random() * 3,
+                Math.sin(angle) * radius
+            );
+            particle.userData = {
+                angle: angle,
+                radius: radius,
+                speed: 0.5 + Math.random() * 0.5,
+                yOffset: Math.random() * 3
+            };
+            this.mesh.add(particle);
+            this.particles.push(particle);
+        }
 
         // Position boss
         this.mesh.position.set(x, 0, z);
@@ -113,14 +200,32 @@ class BossMonster extends Monster {
         this.scene.add(this.mesh);
     }
 
-    update(delta, player) {
+    update(delta, player, wallSystem = null) {
         // Update area attack cooldown
         if (this.areaAttackCooldown > 0) {
             this.areaAttackCooldown -= delta;
         }
 
+        // Animate aura (pulsing effect)
+        if (this.aura) {
+            const time = Date.now() * 0.001;
+            this.aura.material.opacity = 0.2 + Math.sin(time * 2) * 0.1;
+            this.aura.rotation.z += delta * 0.5;
+        }
+
+        // Animate particles (orbiting around boss)
+        if (this.particles) {
+            const time = Date.now() * 0.001;
+            this.particles.forEach(particle => {
+                particle.userData.angle += delta * particle.userData.speed;
+                particle.position.x = Math.cos(particle.userData.angle) * particle.userData.radius;
+                particle.position.z = Math.sin(particle.userData.angle) * particle.userData.radius;
+                particle.position.y = particle.userData.yOffset + Math.sin(time * 2 + particle.userData.angle) * 0.5;
+            });
+        }
+
         // Call parent update for normal behavior
-        super.update(delta, player);
+        super.update(delta, player, wallSystem);
 
         if (!player || player.health <= 0) return;
 
@@ -177,11 +282,11 @@ class BossMonster extends Monster {
 
         animate();
 
-        // Scale animation for boss
-        const originalScale = this.mesh.scale.clone();
-        this.mesh.scale.multiplyScalar(1.1);
+        // Visual feedback - boss pulses
+        const originalY = this.mesh.position.y;
+        this.mesh.position.y = originalY + 0.3;
         setTimeout(() => {
-            this.mesh.scale.copy(originalScale);
+            this.mesh.position.y = originalY;
         }, 100);
     }
 
@@ -190,11 +295,11 @@ class BossMonster extends Monster {
         player.takeDamage(this.damage);
         this.attackCooldown = this.attackCooldownTime;
 
-        // Visual feedback - scale animation
-        const originalScale = this.mesh.scale.clone();
-        this.mesh.scale.multiplyScalar(1.15);
+        // Visual feedback - boss lunges forward
+        const originalY = this.mesh.position.y;
+        this.mesh.position.y = originalY + 0.2;
         setTimeout(() => {
-            this.mesh.scale.copy(originalScale);
+            this.mesh.position.y = originalY;
         }, 100);
     }
 }

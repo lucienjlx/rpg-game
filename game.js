@@ -5,6 +5,8 @@ const game = {
     renderer: null,
     player: null,
     monsters: [],
+    lootItems: [],
+    smith: null,
     keys: {},
     clock: new THREE.Clock(),
     monsterSpawnTimer: 0,
@@ -13,6 +15,13 @@ const game = {
     wallSystem: null,
     fogSystem: null,
     progressionCheckTimer: 0,
+    speedControl: null,
+    lootSystem: null,
+    craftingSystem: null,
+    introSequence: null,
+    showMessage: null,
+    spawnBoss: null,
+    gameStarted: false,
 };
 
 // Initialize the game
@@ -44,9 +53,12 @@ function init() {
     directionalLight.position.set(10, 20, 10);
     directionalLight.castShadow = true;
     directionalLight.shadow.camera.left = -100;
-    directionalLight.shadow.camera.right = 200;
-    directionalLight.shadow.camera.top = 50;
-    directionalLight.shadow.camera.bottom = -50;
+    directionalLight.shadow.camera.right = 100;
+    directionalLight.shadow.camera.top = 100;
+    directionalLight.shadow.camera.bottom = -100;
+    directionalLight.shadow.mapSize.width = 2048;
+    directionalLight.shadow.mapSize.height = 2048;
+    directionalLight.shadow.bias = -0.0001;
     game.scene.add(directionalLight);
 
     // Initialize zone system
@@ -61,13 +73,50 @@ function init() {
     game.fogSystem = new FogSystem();
     game.fogSystem.createAllFog(game.zoneSystem.zones, game.scene);
 
-    // Add grid helper for reference
-    const gridHelper = new THREE.GridHelper(200, 100, 0x000000, 0x444444);
-    gridHelper.position.x = 50; // Center grid on all zones
-    game.scene.add(gridHelper);
+    // Create zone decorations
+    game.zoneDecorations = new ZoneDecorations(game.scene, game.zoneSystem);
+    game.zoneDecorations.createDecorationsForAllZones();
+
+    // Initialize speed control
+    game.speedControl = new SpeedControl();
+
+    // Initialize loot system
+    game.lootSystem = new LootSystem();
+
+    // Initialize crafting system
+    game.craftingSystem = new CraftingSystem();
+
+    game.showMessage = showMessage;
+    game.spawnBoss = spawnBoss;
 
     // Create player
     game.player = new Player(game.scene);
+
+    // Initialize crafting UI
+    game.player.craftingUI = new CraftingUI(
+        game.craftingSystem,
+        game.player.inventory,
+        game.player
+    );
+
+    // Create Smith NPC in Zone 1 (starting zone)
+    game.smith = new Smith(game.scene, -25, 0);
+
+    // Set up speed button
+    const speedButton = document.getElementById('speed-button');
+    speedButton.addEventListener('click', () => {
+        game.speedControl.cycleSpeed();
+        speedButton.textContent = `⚡ Speed: ${game.speedControl.getSpeedLabel()}`;
+    });
+
+    // Add grid helper for reference (centered on 3x3 grid layout)
+    const gridHelper = new THREE.GridHelper(150, 75, 0x000000, 0x444444);
+    gridHelper.position.x = 0; // Center on x-axis (between -75 and 75)
+    gridHelper.position.z = 0; // Center on z-axis (between -75 and 75)
+    game.scene.add(gridHelper);
+
+    // Initialize intro sequence
+    game.introSequence = new IntroSequence(game.scene, game.camera, game.renderer);
 
     // Set up keyboard controls
     document.addEventListener('keydown', (e) => {
@@ -78,10 +127,37 @@ function init() {
             e.preventDefault();
             performAttack();
         }
+
+        // Toggle inventory with 'I' key
+        if (e.key.toLowerCase() === 'i') {
+            if (game.player && game.player.inventoryUI) {
+                game.player.inventoryUI.toggle();
+            }
+        }
+
+        // Interact with Smith with 'E' key
+        if (e.key.toLowerCase() === 'e') {
+            if (game.player && game.smith && game.player.craftingUI) {
+                if (game.smith.isPlayerInRange(game.player.mesh.position)) {
+                    game.player.craftingUI.toggle();
+                }
+            }
+        }
+
+        // Use health potion with 'H' key
+        if (e.key.toLowerCase() === 'h') {
+            if (game.player && game.player.useHealthPotion) {
+                game.player.useHealthPotion();
+            }
+        }
     });
 
     document.addEventListener('keyup', (e) => {
         game.keys[e.key.toLowerCase()] = false;
+    });
+
+    document.addEventListener('contextmenu', (e) => {
+        e.preventDefault();
     });
 
     // Handle window resize
@@ -89,6 +165,13 @@ function init() {
 
     // Start animation loop
     animate();
+
+    // Start intro sequence
+    game.introSequence.start(() => {
+        // Intro complete - start the game
+        game.gameStarted = true;
+        showMessage('Welcome, Hero! Your journey begins...', 3000);
+    });
 }
 
 // Handle window resize
@@ -102,10 +185,10 @@ function onWindowResize() {
 function animate() {
     requestAnimationFrame(animate);
 
-    const delta = game.clock.getDelta();
+    const delta = game.clock.getDelta() * game.speedControl.getCurrentSpeed();
 
     // Update player
-    if (game.player) {
+    if (game.player && game.gameStarted) {
         game.player.update(delta, game.keys, game.wallSystem);
 
         // Update camera to follow player
@@ -124,12 +207,22 @@ function animate() {
     }
 
     // Check progression
-    if (game.zoneSystem && game.player) {
+    if (game.zoneSystem && game.player && game.gameStarted) {
         game.zoneSystem.checkProgression(game.player, game);
     }
 
+    // Update Smith NPC
+    if (game.smith && game.gameStarted) {
+        game.smith.update(game.camera);
+
+        // Show interaction prompt when near Smith
+        if (game.player && game.smith.isPlayerInRange(game.player.mesh.position)) {
+            // Could add a visual indicator here
+        }
+    }
+
     // Auto-attack nearby monsters
-    if (game.player && game.player.canAttack()) {
+    if (game.player && game.player.canAttack() && game.gameStarted) {
         const playerPos = game.player.mesh.position;
         const attackRange = game.player.attackRange;
 
@@ -157,21 +250,42 @@ function animate() {
     }
 
     // Update monsters
-    game.monsters.forEach((monster, index) => {
+    for (let i = game.monsters.length - 1; i >= 0; i--) {
+        const monster = game.monsters[i];
         if (monster.health <= 0) {
             // Remove dead monster
             game.scene.remove(monster.mesh);
-            game.monsters.splice(index, 1);
+            game.monsters.splice(i, 1);
         } else {
-            monster.update(delta, game.player);
+            monster.update(delta, game.player, game.wallSystem);
         }
-    });
+    }
+
+    // Update loot items
+    for (let i = game.lootItems.length - 1; i >= 0; i--) {
+        const loot = game.lootItems[i];
+        if (loot.pickedUp) {
+            game.lootItems.splice(i, 1);
+            continue;
+        }
+
+        loot.update(delta);
+
+        // Check for pickup
+        if (game.player && loot.checkPickup(game.player.mesh.position)) {
+            // Add to inventory
+            game.player.inventory.addItem(loot.itemId, loot.lootData);
+            showMessage(`Picked up ${loot.lootData.name}`, 1500);
+        }
+    }
 
     // Spawn monsters
-    game.monsterSpawnTimer += delta;
-    if (game.monsterSpawnTimer >= game.monsterSpawnInterval) {
-        spawnMonster();
-        game.monsterSpawnTimer = 0;
+    if (game.gameStarted) {
+        game.monsterSpawnTimer += delta;
+        if (game.monsterSpawnTimer >= game.monsterSpawnInterval) {
+            spawnMonster();
+            game.monsterSpawnTimer = 0;
+        }
     }
 
     // Render scene

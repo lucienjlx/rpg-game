@@ -6,6 +6,7 @@ class Monster {
         this.attackRange = 2;
         this.attackCooldown = 0;
         this.attackCooldownTime = 1.5;
+        this.zoneId = zoneConfig ? zoneConfig.zoneId : 1;
 
         // Apply zone configuration if provided
         if (zoneConfig) {
@@ -13,15 +14,20 @@ class Monster {
             this.health = zoneConfig.health;
             this.damage = zoneConfig.damage;
             this.color = zoneConfig.color;
-            this.scale = zoneConfig.scale;
+            this.ferocity = zoneConfig.ferocity || 1.0;
         } else {
             // Default stats
             this.maxHealth = 50;
             this.health = 50;
             this.damage = 10;
             this.color = 0x8b0000;
-            this.scale = 1.0;
+            this.ferocity = 1.0;
         }
+
+        // Apply ferocity to behavior stats
+        this.speed = 2 * this.ferocity;
+        this.attackCooldownTime = 1.5 / this.ferocity;
+        this.detectionRange = 20 * (1 + (this.ferocity - 1) * 0.5);
 
         this.xpReward = 50; // Doubled from 25 for faster progression
 
@@ -75,8 +81,63 @@ class Monster {
         rightEye.position.set(0.2, 1.9, 0.4);
         this.mesh.add(rightEye);
 
-        // Apply scale
-        this.mesh.scale.set(this.scale, this.scale, this.scale);
+        // Apply ferocity-based eye color
+        const eyeColor = this.getEyeColorByFerocity();
+        leftEye.material.color.set(eyeColor);
+        leftEye.material.emissive.set(eyeColor);
+        leftEye.material.emissiveIntensity = 0.5 + (this.ferocity - 1) * 0.3;
+        rightEye.material.color.set(eyeColor);
+        rightEye.material.emissive.set(eyeColor);
+        rightEye.material.emissiveIntensity = 0.5 + (this.ferocity - 1) * 0.3;
+
+        // Beastly jaw and teeth
+        const jawGeo = new THREE.BoxGeometry(0.7, 0.2, 0.6);
+        const jawMat = new THREE.MeshStandardMaterial({
+            color: this.color,
+            roughness: 0.9
+        });
+        const jaw = new THREE.Mesh(jawGeo, jawMat);
+        jaw.position.set(0, 1.45, 0.5);
+        jaw.castShadow = true;
+        this.mesh.add(jaw);
+
+        const toothGeo = new THREE.ConeGeometry(0.05, 0.2, 4);
+        const toothMat = new THREE.MeshStandardMaterial({
+            color: 0xEEEEEE,
+            roughness: 0.3
+        });
+        for (let i = 0; i < 4; i++) {
+            const tooth = new THREE.Mesh(toothGeo, toothMat);
+            tooth.position.set(-0.18 + i * 0.12, 1.3, 0.7);
+            tooth.rotation.x = Math.PI;
+            this.mesh.add(tooth);
+        }
+
+        // Back spikes
+        const spikeGeo = new THREE.ConeGeometry(0.08, 0.3, 4);
+        const spikeMat = new THREE.MeshStandardMaterial({
+            color: 0x1C1C1C,
+            roughness: 0.8
+        });
+        for (let i = 0; i < 4; i++) {
+            const spike = new THREE.Mesh(spikeGeo, spikeMat);
+            spike.position.set(0, 1.1 + i * 0.25, -0.4);
+            spike.rotation.x = Math.PI / 10;
+            this.mesh.add(spike);
+        }
+
+        // DO NOT SCALE - all monsters same size
+        // Ferocity affects behavior, not size
+
+        // Add weapon
+        this.weapon = null;
+        this.createWeapon();
+
+        // Apply random variant for visual variety
+        if (MonsterVariants) {
+            const variant = MonsterVariants.getRandomVariant(this.zoneId);
+            MonsterVariants.applyVariantToMonster(this, variant);
+        }
 
         // Position monster
         this.mesh.position.set(x, 0, z);
@@ -111,6 +172,30 @@ class Monster {
         this.healthBarFg.position.z = 0.01; // Slightly in front
         this.healthBarGroup.add(this.healthBarFg);
 
+        // Create health text using canvas texture
+        const canvas = document.createElement('canvas');
+        canvas.width = 256;
+        canvas.height = 64;
+        const context = canvas.getContext('2d');
+
+        this.healthCanvas = canvas;
+        this.healthContext = context;
+
+        const texture = new THREE.CanvasTexture(canvas);
+        const textMaterial = new THREE.MeshBasicMaterial({
+            map: texture,
+            transparent: true,
+            side: THREE.DoubleSide
+        });
+
+        const textGeometry = new THREE.PlaneGeometry(1.5, 0.4);
+        this.healthText = new THREE.Mesh(textGeometry, textMaterial);
+        this.healthText.position.z = 0.02;
+        this.healthText.position.y = 0.3;
+        this.healthBarGroup.add(this.healthText);
+
+        this.updateHealthBar();
+
         this.mesh.add(this.healthBarGroup);
     }
 
@@ -129,9 +214,28 @@ class Monster {
         } else {
             this.healthBarFg.material.color.set(0xff0000); // Red
         }
+
+        // Update health text
+        if (this.healthContext && this.healthText) {
+            const ctx = this.healthContext;
+            ctx.clearRect(0, 0, this.healthCanvas.width, this.healthCanvas.height);
+
+            ctx.font = 'bold 32px Arial';
+            ctx.fillStyle = 'white';
+            ctx.strokeStyle = 'black';
+            ctx.lineWidth = 4;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+
+            const text = `${Math.ceil(this.health)}/${this.maxHealth}`;
+            ctx.strokeText(text, 128, 32);
+            ctx.fillText(text, 128, 32);
+
+            this.healthText.material.map.needsUpdate = true;
+        }
     }
 
-    update(delta, player) {
+    update(delta, player, wallSystem = null) {
         // Update attack cooldown
         if (this.attackCooldown > 0) {
             this.attackCooldown -= delta;
@@ -167,8 +271,17 @@ class Monster {
                     playerPos.z - monsterPos.z
                 ).normalize();
 
+                const oldPosition = this.mesh.position.clone();
+
                 this.mesh.position.x += direction.x * this.speed * delta;
+                if (wallSystem && wallSystem.checkCollision(this.mesh.position)) {
+                    this.mesh.position.x = oldPosition.x;
+                }
+
                 this.mesh.position.z += direction.z * this.speed * delta;
+                if (wallSystem && wallSystem.checkCollision(this.mesh.position)) {
+                    this.mesh.position.z = oldPosition.z;
+                }
 
                 // Rotate to face player
                 const angle = Math.atan2(direction.x, direction.z);
@@ -185,6 +298,9 @@ class Monster {
     attackPlayer(player) {
         player.takeDamage(this.damage);
         this.attackCooldown = this.attackCooldownTime;
+
+        // Swing weapon animation
+        this.swingWeapon();
 
         // Visual feedback - scale animation
         const originalScale = this.mesh.scale.clone();
@@ -223,5 +339,67 @@ class Monster {
 
     getPosition() {
         return this.mesh.position;
+    }
+
+    getEyeColorByFerocity() {
+        // Eye color changes based on ferocity level
+        if (this.ferocity >= 4.0) {
+            return 0x9400D3; // Purple for extreme ferocity
+        } else if (this.ferocity >= 3.0) {
+            return 0x8B008B; // Dark magenta for very high ferocity
+        } else if (this.ferocity >= 2.0) {
+            return 0xFF0000; // Red for high ferocity
+        } else if (this.ferocity >= 1.5) {
+            return 0xFF8C00; // Orange for medium ferocity
+        } else {
+            return 0xFFFF00; // Yellow for normal ferocity
+        }
+    }
+
+    createWeapon() {
+        if (!MonsterWeapons) return;
+
+        const weaponConfig = MonsterWeapons.getWeaponForZone(this.zoneId);
+        if (!weaponConfig) return;
+
+        this.weapon = MonsterWeapons.createWeapon(weaponConfig.type, weaponConfig.color);
+        if (this.weapon) {
+            // Position weapon at monster's side
+            this.weapon.position.set(0.6, 1.0, 0);
+            this.weapon.rotation.z = -Math.PI / 4;
+            this.mesh.add(this.weapon);
+            this.weaponDamage = weaponConfig.damage;
+        }
+    }
+
+    swingWeapon() {
+        if (!this.weapon) return;
+
+        const originalRotation = this.weapon.rotation.clone();
+        const swingDuration = 200;
+        const startTime = Date.now();
+
+        const animate = () => {
+            const elapsed = Date.now() - startTime;
+            const progress = Math.min(elapsed / swingDuration, 1);
+
+            if (progress < 0.5) {
+                // Swing forward
+                const swingProgress = progress * 2;
+                this.weapon.rotation.z = originalRotation.z + (Math.PI / 2) * swingProgress;
+            } else {
+                // Swing back
+                const returnProgress = (progress - 0.5) * 2;
+                this.weapon.rotation.z = originalRotation.z + (Math.PI / 2) * (1 - returnProgress);
+            }
+
+            if (progress < 1) {
+                requestAnimationFrame(animate);
+            } else {
+                this.weapon.rotation.copy(originalRotation);
+            }
+        };
+
+        animate();
     }
 }

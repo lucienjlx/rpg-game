@@ -129,3 +129,318 @@ body {
 #message-panel.show {
     display: block;
 }
+
+#speed-panel {
+    position: absolute;
+    bottom: 140px;
+    left: 20px;
+    pointer-events: auto;
+}
+
+#speed-button {
+    background: rgba(0, 0, 0, 0.7);
+    color: white;
+    border: 2px solid #ffd700;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+#speed-button:hover {
+    background: rgba(255, 215, 0, 0.2);
+    border-color: #ffed4e;
+    transform: scale(1.05);
+}
+
+#speed-button:active {
+    transform: scale(0.95);
+}
+
+/* Game Panels (Inventory, Crafting) */
+.game-panel {
+    position: absolute;
+    top: 50%;
+    right: 20px;
+    transform: translateY(-50%);
+    width: 400px;
+    max-height: 80vh;
+    background: rgba(0, 0, 0, 0.9);
+    border: 2px solid #ffd700;
+    border-radius: 8px;
+    color: white;
+    pointer-events: auto;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px;
+    background: rgba(255, 215, 0, 0.1);
+    border-bottom: 1px solid #ffd700;
+}
+
+.panel-header h2 {
+    margin: 0;
+    font-size: 20px;
+    color: #ffd700;
+}
+
+.panel-hint {
+    padding: 8px 15px;
+    font-size: 12px;
+    color: #ffd700;
+    background: rgba(255, 255, 255, 0.05);
+    border-bottom: 1px solid rgba(255, 215, 0, 0.3);
+}
+
+.close-button {
+    background: none;
+    border: none;
+    color: #ffd700;
+    font-size: 28px;
+    cursor: pointer;
+    padding: 0;
+    width: 30px;
+    height: 30px;
+    line-height: 1;
+    transition: transform 0.2s;
+}
+
+.close-button:hover {
+    transform: scale(1.2);
+}
+
+.panel-tabs {
+    display: flex;
+    background: rgba(0, 0, 0, 0.5);
+    border-bottom: 1px solid #ffd700;
+}
+
+.tab-button {
+    flex: 1;
+    padding: 10px;
+    background: none;
+    border: none;
+    color: #aaa;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: bold;
+    transition: all 0.3s;
+}
+
+.tab-button:hover {
+    background: rgba(255, 215, 0, 0.1);
+    color: #ffd700;
+}
+
+.tab-button.active {
+    background: rgba(255, 215, 0, 0.2);
+    color: #ffd700;
+    border-bottom: 2px solid #ffd700;
+}
+
+.panel-content {
+    flex: 1;
+    padding: 15px;
+    overflow-y: auto;
+}
+
+.panel-content::-webkit-scrollbar {
+    width: 8px;
+}
+
+.panel-content::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.3);
+}
+
+.panel-content::-webkit-scrollbar-thumb {
+    background: #ffd700;
+    border-radius: 4px;
+}
+
+.inventory-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px;
+    margin-bottom: 8px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 4px;
+    border-left: 3px solid #888;
+    transition: all 0.2s;
+}
+
+.inventory-item:hover {
+    background: rgba(255, 255, 255, 0.1);
+    transform: translateX(5px);
+}
+
+.inventory-item.rarity-common {
+    border-left-color: #ffffff;
+}
+
+.inventory-item.rarity-uncommon {
+    border-left-color: #00ff00;
+}
+
+.inventory-item.rarity-rare {
+    border-left-color: #0080ff;
+}
+
+.inventory-item.rarity-epic {
+    border-left-color: #a335ee;
+}
+
+.item-name {
+    font-weight: bold;
+}
+
+.item-count {
+    color: #ffd700;
+    font-weight: bold;
+}
+
+.item-stats {
+    color: #00ff00;
+    font-weight: bold;
+}
+
+.equip-button {
+    background: rgba(255, 215, 0, 0.15);
+    border: 1px solid #ffd700;
+    color: #ffd700;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.equip-button:disabled {
+    opacity: 0.6;
+    cursor: default;
+}
+
+.empty-message {
+    text-align: center;
+    color: #888;
+    padding: 40px 20px;
+    font-style: italic;
+}
+
+/* Crafting UI */
+.crafting-recipe {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+    padding: 15px;
+    margin-bottom: 15px;
+    border: 2px solid rgba(255, 255, 255, 0.1);
+}
+
+.crafting-recipe.selected {
+    border-color: #ffd700;
+    box-shadow: 0 0 10px rgba(255, 215, 0, 0.4);
+}
+
+.crafting-recipe.can-craft {
+    border-color: rgba(0, 255, 0, 0.3);
+}
+
+.crafting-recipe.cannot-craft {
+    border-color: rgba(255, 0, 0, 0.3);
+    opacity: 0.7;
+}
+
+.recipe-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.recipe-header h3 {
+    margin: 0;
+    font-size: 18px;
+}
+
+.recipe-header h3.rarity-common { color: #ffffff; }
+.recipe-header h3.rarity-uncommon { color: #00ff00; }
+.recipe-header h3.rarity-rare { color: #0080ff; }
+.recipe-header h3.rarity-epic { color: #a335ee; }
+
+.tier-badge {
+    background: rgba(255, 215, 0, 0.2);
+    color: #ffd700;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: bold;
+}
+
+.recipe-stats {
+    margin-bottom: 10px;
+}
+
+.stat-bonus {
+    color: #00ff00;
+    font-weight: bold;
+}
+
+.recipe-requirements {
+    margin-bottom: 10px;
+}
+
+.recipe-requirements h4 {
+    margin: 0 0 8px 0;
+    font-size: 14px;
+    color: #ffd700;
+}
+
+.requirement {
+    display: flex;
+    justify-content: space-between;
+    padding: 4px 8px;
+    margin: 4px 0;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 4px;
+    font-size: 14px;
+}
+
+.requirement.has-enough {
+    color: #00ff00;
+}
+
+.requirement.not-enough {
+    color: #ff6666;
+}
+
+.craft-button {
+    width: 100%;
+    padding: 10px;
+    background: linear-gradient(135deg, #ffd700, #ffed4e);
+    border: none;
+    border-radius: 4px;
+    color: #000;
+    font-weight: bold;
+    font-size: 16px;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.craft-button:hover:not(:disabled) {
+    background: linear-gradient(135deg, #ffed4e, #ffd700);
+    transform: scale(1.02);
+}
+
+.craft-button:disabled {
+    background: #555;
+    color: #888;
+    cursor: not-allowed;
+}

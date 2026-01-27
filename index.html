@@ -23,6 +23,14 @@
                 <span id="current-zone">Green Plains</span>
             </div>
             <div class="stat-row">
+                <span>ATK:</span>
+                <span id="player-attack">20</span>
+            </div>
+            <div class="stat-row">
+                <span>Weapon:</span>
+                <span id="player-weapon">Simple Sword (+8)</span>
+            </div>
+            <div class="stat-row">
                 <span>Health:</span>
                 <div class="bar-container">
                     <div id="health-bar" class="bar health-bar"></div>
@@ -43,6 +51,14 @@
             <p>WASD - Move</p>
             <p>Mouse - Look Around</p>
             <p>Space - Attack</p>
+            <p>I - Inventory</p>
+            <p>E - Talk to Smith</p>
+            <p>H - Use Potion</p>
+            <p>Crafting: Arrows + Enter</p>
+        </div>
+
+        <div id="speed-panel">
+            <button id="speed-button">⚡ Speed: 1x</button>
         </div>
 
         <div id="message-panel"></div>
@@ -52,13 +68,25 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 
     <!-- Game Scripts -->
+    <script src="speedControl.js"></script>
+    <script src="lootSystem.js"></script>
+    <script src="lootItem.js"></script>
+    <script src="inventory.js"></script>
+    <script src="inventoryUI.js"></script>
+    <script src="craftingSystem.js"></script>
+    <script src="craftingUI.js"></script>
+    <script src="smith.js"></script>
+    <script src="monsterWeapons.js"></script>
+    <script src="monsterVariants.js"></script>
     <script src="zoneSystem.js"></script>
     <script src="wallSystem.js"></script>
     <script src="fogSystem.js"></script>
+    <script src="zoneDecorations.js"></script>
     <script src="levelSystem.js"></script>
     <script src="player.js"></script>
     <script src="monster.js"></script>
     <script src="bossMonster.js"></script>
+    <script src="introSequence.js"></script>
     <script src="combat.js"></script>
     <script src="game.js"></script>
 </body>
