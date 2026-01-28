@@ -83,12 +83,15 @@ class ZoneDecorations {
     createShadowDecoration(x, z) {
         const rand = Math.random();
 
-        if (rand < 0.5) {
+        if (rand < 0.35) {
             // Dark obelisk
             return this.createObelisk(x, z, 0x4B0082);
-        } else {
+        } else if (rand < 0.7) {
             // Shadow crystal
             return this.createCrystal(x, z, 0x8B008B);
+        } else {
+            // Ruined cityscape
+            return this.createRuinedCityscape(x, z);
         }
     }
 
@@ -107,7 +110,10 @@ class ZoneDecorations {
     createForestDecoration(x, z) {
         const rand = Math.random();
 
-        if (rand < 0.6) {
+        if (rand < 0.15) {
+            // Ruined watchpost
+            return this.createRuinedWatchpost(x, z);
+        } else if (rand < 0.65) {
             // Corrupted tree
             return this.createTree(x, z, 0x2F4F2F, 0x3D5229);
         } else {
@@ -131,12 +137,15 @@ class ZoneDecorations {
     createVoidDecoration(x, z) {
         const rand = Math.random();
 
-        if (rand < 0.6) {
+        if (rand < 0.45) {
             // Void portal fragment
             return this.createVoidPortal(x, z);
-        } else {
+        } else if (rand < 0.7) {
             // Dark crystal
             return this.createCrystal(x, z, 0x191970);
+        } else {
+            // Ruined cityscape
+            return this.createRuinedCityscape(x, z);
         }
     }
 
@@ -426,6 +435,142 @@ class ZoneDecorations {
         const center = new THREE.Mesh(centerGeo, centerMat);
         center.position.y = 0.8;
         group.add(center);
+
+        group.position.set(x, 0, z);
+        this.scene.add(group);
+        return group;
+    }
+
+    createRuinedCityscape(x, z) {
+        const group = new THREE.Group();
+        const stoneMat = new THREE.MeshStandardMaterial({
+            color: 0x6E6E6E,
+            roughness: 0.9
+        });
+        const darkStoneMat = new THREE.MeshStandardMaterial({
+            color: 0x4A4A4A,
+            roughness: 0.95
+        });
+
+        const baseGeo = new THREE.BoxGeometry(6, 0.4, 4);
+        const base = new THREE.Mesh(baseGeo, stoneMat);
+        base.position.y = 0.2;
+        base.castShadow = true;
+        group.add(base);
+
+        const wallCount = 3 + Math.floor(Math.random() * 3);
+        for (let i = 0; i < wallCount; i++) {
+            const width = 2 + Math.random() * 2.5;
+            const height = 1 + Math.random() * 2.5;
+            const wallGeo = new THREE.BoxGeometry(width, height, 0.4);
+            const wall = new THREE.Mesh(wallGeo, stoneMat);
+            wall.position.set(
+                (Math.random() - 0.5) * 4,
+                height / 2,
+                (Math.random() - 0.5) * 3
+            );
+            wall.rotation.y = Math.random() * Math.PI;
+            wall.rotation.z = (Math.random() - 0.5) * 0.2;
+            wall.castShadow = true;
+            group.add(wall);
+        }
+
+        const towerGeo = new THREE.CylinderGeometry(0.6, 0.8, 3 + Math.random() * 2, 6);
+        const tower = new THREE.Mesh(towerGeo, darkStoneMat);
+        tower.position.set(-1.6, 1.6, 1.2);
+        tower.rotation.z = -0.2;
+        tower.castShadow = true;
+        group.add(tower);
+
+        const archGroup = this.createRuinedArch(darkStoneMat);
+        archGroup.position.set(1.6, 0, -1.2);
+        archGroup.rotation.y = Math.random() * Math.PI;
+        group.add(archGroup);
+
+        const rubbleCount = 6 + Math.floor(Math.random() * 4);
+        for (let i = 0; i < rubbleCount; i++) {
+            const rubbleGeo = new THREE.DodecahedronGeometry(0.3 + Math.random() * 0.3, 0);
+            const rubble = new THREE.Mesh(rubbleGeo, darkStoneMat);
+            rubble.position.set(
+                (Math.random() - 0.5) * 5,
+                0.2 + Math.random() * 0.3,
+                (Math.random() - 0.5) * 3.5
+            );
+            rubble.rotation.set(
+                Math.random() * Math.PI,
+                Math.random() * Math.PI,
+                Math.random() * Math.PI
+            );
+            rubble.castShadow = true;
+            group.add(rubble);
+        }
+
+        group.position.set(x, 0, z);
+        group.rotation.y = Math.random() * Math.PI * 2;
+        this.scene.add(group);
+        return group;
+    }
+
+    createRuinedArch(material) {
+        const group = new THREE.Group();
+        const pillarGeo = new THREE.BoxGeometry(0.4, 2.2, 0.4);
+        const beamGeo = new THREE.BoxGeometry(2.2, 0.4, 0.4);
+
+        const leftPillar = new THREE.Mesh(pillarGeo, material);
+        leftPillar.position.set(-0.9, 1.1, 0);
+        leftPillar.castShadow = true;
+        group.add(leftPillar);
+
+        const rightPillar = new THREE.Mesh(pillarGeo, material);
+        rightPillar.position.set(0.9, 1.1, 0);
+        rightPillar.castShadow = true;
+        group.add(rightPillar);
+
+        const beam = new THREE.Mesh(beamGeo, material);
+        beam.position.set(0, 2.3, 0);
+        beam.rotation.z = (Math.random() - 0.5) * 0.3;
+        beam.castShadow = true;
+        group.add(beam);
+
+        return group;
+    }
+
+    createRuinedWatchpost(x, z) {
+        const group = new THREE.Group();
+        const woodMat = new THREE.MeshStandardMaterial({
+            color: 0x5A3B2E,
+            roughness: 0.9
+        });
+        const stoneMat = new THREE.MeshStandardMaterial({
+            color: 0x5B5B5B,
+            roughness: 0.9
+        });
+
+        const baseGeo = new THREE.CylinderGeometry(0.6, 0.8, 1.2, 8);
+        const base = new THREE.Mesh(baseGeo, stoneMat);
+        base.position.y = 0.6;
+        base.castShadow = true;
+        group.add(base);
+
+        const postGeo = new THREE.BoxGeometry(0.2, 2.2, 0.2);
+        const post = new THREE.Mesh(postGeo, woodMat);
+        post.position.set(0, 2.1, 0);
+        post.rotation.z = 0.2;
+        post.castShadow = true;
+        group.add(post);
+
+        const platformGeo = new THREE.BoxGeometry(1.6, 0.2, 1.6);
+        const platform = new THREE.Mesh(platformGeo, woodMat);
+        platform.position.set(0, 3.2, 0);
+        platform.rotation.z = -0.15;
+        platform.castShadow = true;
+        group.add(platform);
+
+        const railingGeo = new THREE.BoxGeometry(1.6, 0.2, 0.2);
+        const rail = new THREE.Mesh(railingGeo, woodMat);
+        rail.position.set(0, 3.5, 0.7);
+        rail.rotation.z = -0.15;
+        group.add(rail);
 
         group.position.set(x, 0, z);
         this.scene.add(group);
