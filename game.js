@@ -148,6 +148,16 @@ function init() {
             }
         }
 
+        // Open crafting with Enter
+        if (e.key === 'Enter') {
+            if (game.player && game.player.craftingUI && game.gameStarted) {
+                if (!game.player.craftingUI.isOpen) {
+                    e.preventDefault();
+                    game.player.craftingUI.open();
+                }
+            }
+        }
+
         // Interact with Smith with 'E' key
         if (e.key.toLowerCase() === 'e') {
             if (game.player && game.smith && game.player.craftingUI && game.gameStarted) {

@@ -126,7 +126,7 @@ class CraftingUI {
                     ${requirementsHTML}
                 </div>
                 <button class="craft-button" data-recipe="${recipe.id}" ${canCraft ? '' : 'disabled'}>
-                    ${canCraft ? 'Craft (C)' : 'Missing Materials'}
+                    ${canCraft ? 'Craft (Enter/C)' : 'Missing Materials'}
                 </button>
             `;
 
