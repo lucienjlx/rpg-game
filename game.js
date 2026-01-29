@@ -22,6 +22,7 @@ const game = {
     showMessage: null,
     spawnBoss: null,
     gameStarted: false,
+    uiFrozenFrameRendered: false,
 };
 
 // Initialize the game
@@ -223,6 +224,20 @@ function animate() {
     requestAnimationFrame(animate);
 
     const delta = game.clock.getDelta() * game.speedControl.getCurrentSpeed();
+    const uiOpen = game.player && (
+        (game.player.craftingUI && game.player.craftingUI.isOpen) ||
+        (game.player.inventoryUI && game.player.inventoryUI.isOpen)
+    );
+
+    if (uiOpen) {
+        if (!game.uiFrozenFrameRendered) {
+            game.renderer.render(game.scene, game.camera);
+            game.uiFrozenFrameRendered = true;
+        }
+        return;
+    }
+
+    game.uiFrozenFrameRendered = false;
 
     // Update player
     if (game.player && game.gameStarted) {

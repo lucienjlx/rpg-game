@@ -55,19 +55,6 @@ class CraftingUI {
         });
 
         const content = panel.querySelector('#crafting-content');
-        content.addEventListener('mousemove', (e) => {
-            const recipeEl = e.target.closest('.crafting-recipe');
-            if (!recipeEl) {
-                this.setHover(null);
-                return;
-            }
-
-            const index = Number(recipeEl.dataset.index);
-            if (!Number.isNaN(index)) {
-                this.setHover(index);
-            }
-        });
-
         content.addEventListener('mouseover', (e) => {
             const recipeEl = e.target.closest('.crafting-recipe');
             if (!recipeEl) {
