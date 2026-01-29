@@ -63,12 +63,13 @@ class CraftingUI {
     }
 
     open() {
+        if (game && game.introSequence && game.introSequence.isPlaying) {
+            game.introSequence.skip();
+        }
+
         const overlay = document.getElementById('ui-overlay');
         if (overlay && overlay.style.display === 'none') {
-            if (game && game.showMessage) {
-                game.showMessage('Crafting is available after the intro. Press Space to skip.', 2000);
-            }
-            return;
+            overlay.style.display = 'block';
         }
 
         this.isOpen = true;
