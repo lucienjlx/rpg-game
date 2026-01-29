@@ -251,6 +251,7 @@ body {
     padding: 15px;
     overflow-y: auto;
     min-height: 0;
+    contain: layout paint;
 }
 
 .panel-content::-webkit-scrollbar {
@@ -347,7 +348,7 @@ body {
 
 .crafting-recipe.selected {
     border-color: #ffd700;
-    box-shadow: 0 0 10px rgba(255, 215, 0, 0.4);
+    background: rgba(255, 215, 0, 0.08);
 }
 
 .crafting-recipe.can-craft {

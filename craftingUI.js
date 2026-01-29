@@ -25,7 +25,7 @@ class CraftingUI {
 
         panel.innerHTML = `
             <div class="panel-header">
-                <h2>⚒️ Smith's Forge</h2>
+                <h2>Smith's Forge</h2>
                 <button class="close-button" id="crafting-close">×</button>
             </div>
             <div class="panel-tabs">
