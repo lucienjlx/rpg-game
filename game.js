@@ -139,10 +139,11 @@ function init() {
             }
         }
 
-        // Toggle crafting with 'C' key
+        // Open crafting with 'C' key
         if (e.key.toLowerCase() === 'c') {
-            if (game.player && game.player.craftingUI && game.gameStarted) {
+            if (game.player && game.player.craftingUI) {
                 if (!game.player.craftingUI.isOpen) {
+                    e.preventDefault();
                     game.player.craftingUI.open();
                 }
             }
@@ -150,7 +151,7 @@ function init() {
 
         // Open crafting with Enter
         if (e.key === 'Enter') {
-            if (game.player && game.player.craftingUI && game.gameStarted) {
+            if (game.player && game.player.craftingUI) {
                 if (!game.player.craftingUI.isOpen) {
                     e.preventDefault();
                     game.player.craftingUI.open();
