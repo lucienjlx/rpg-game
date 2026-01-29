@@ -4,6 +4,7 @@ class CraftingUI {
         this.inventory = inventory;
         this.player = player;
         this.isOpen = false;
+        this.hoveredIndex = null;
         this.currentCategory = 'weapon';
         this.currentRecipes = [];
         this.selectedIndex = 0;
@@ -33,7 +34,7 @@ class CraftingUI {
                 <button class="tab-button" data-tab="consumable">Consumables</button>
                 <button class="tab-button" data-tab="material">Materials</button>
             </div>
-            <div class="panel-hint">Arrows: select · Enter/C: craft · Left/Right: tab</div>
+            <div class="panel-hint">Scroll: list · Arrows: select · Enter: craft · C: craft hovered / close · Left/Right: tab</div>
             <div class="panel-content" id="crafting-content">
                 <!-- Content will be dynamically generated -->
             </div>
@@ -51,6 +52,37 @@ class CraftingUI {
             button.addEventListener('click', () => {
                 this.setCategory(button.dataset.tab);
             });
+        });
+
+        const content = panel.querySelector('#crafting-content');
+        content.addEventListener('mousemove', (e) => {
+            const recipeEl = e.target.closest('.crafting-recipe');
+            if (!recipeEl) {
+                this.setHover(null);
+                return;
+            }
+
+            const index = Number(recipeEl.dataset.index);
+            if (!Number.isNaN(index)) {
+                this.setHover(index);
+            }
+        });
+
+        content.addEventListener('mouseover', (e) => {
+            const recipeEl = e.target.closest('.crafting-recipe');
+            if (!recipeEl) {
+                this.setHover(null);
+                return;
+            }
+
+            const index = Number(recipeEl.dataset.index);
+            if (!Number.isNaN(index)) {
+                this.setHover(index);
+            }
+        });
+
+        content.addEventListener('mouseleave', () => {
+            this.setHover(null);
         });
     }
 
@@ -72,6 +104,13 @@ class CraftingUI {
             overlay.style.display = 'block';
         }
 
+        if (game && game.keys) {
+            ['w', 'a', 's', 'd', 'arrowup', 'arrowdown', 'arrowleft', 'arrowright'].forEach((key) => {
+                game.keys[key] = false;
+            });
+        }
+
+        this.hoveredIndex = null;
         this.isOpen = true;
         document.getElementById('crafting-panel').style.display = 'block';
         this.selectedIndex = 0;
@@ -80,6 +119,7 @@ class CraftingUI {
 
     close() {
         this.isOpen = false;
+        this.hoveredIndex = null;
         document.getElementById('crafting-panel').style.display = 'none';
     }
 
@@ -104,6 +144,7 @@ class CraftingUI {
             const recipeDiv = document.createElement('div');
             const selectedClass = index === this.selectedIndex ? ' selected' : '';
             recipeDiv.className = `crafting-recipe ${canCraft ? 'can-craft' : 'cannot-craft'}${selectedClass}`;
+            recipeDiv.dataset.index = String(index);
 
             let requirementsHTML = '';
             for (const [itemId, amount] of Object.entries(recipe.requirements)) {
@@ -160,6 +201,7 @@ class CraftingUI {
         if (this.currentCategory === category) return;
         this.currentCategory = category;
         this.selectedIndex = 0;
+        this.hoveredIndex = null;
 
         const panel = document.getElementById('crafting-panel');
         if (panel) {
@@ -197,19 +239,48 @@ class CraftingUI {
             this.cycleCategory(-1);
         } else if (key === 'arrowright') {
             this.cycleCategory(1);
-        } else if (key === 'enter' || key === 'c') {
+        } else if (key === 'c') {
+            if (this.hoveredIndex === null) {
+                this.close();
+                return;
+            }
+
+            this.selectedIndex = this.hoveredIndex;
+            this.updateSelectionHighlight();
+            this.craftSelected();
+        } else if (key === 'enter') {
             this.craftSelected();
         }
     }
 
     moveSelection(delta) {
         if (!this.currentRecipes.length) return;
+        this.hoveredIndex = null;
         const next = this.selectedIndex + delta;
         this.selectedIndex = Math.max(0, Math.min(this.currentRecipes.length - 1, next));
         this.render();
     }
 
+    setHover(index) {
+        if (index === this.hoveredIndex) return;
+        this.hoveredIndex = index;
+        if (index !== null) {
+            this.selectedIndex = index;
+        }
+        this.updateSelectionHighlight();
+    }
+
+    updateSelectionHighlight() {
+        const content = document.getElementById('crafting-content');
+        if (!content) return;
+        const recipes = content.querySelectorAll('.crafting-recipe');
+        recipes.forEach((recipeEl, index) => {
+            recipeEl.classList.toggle('selected', index === this.selectedIndex);
+        });
+    }
+
     cycleCategory(direction) {
+        this.hoveredIndex = null;
         const categories = ['weapon', 'armor', 'consumable', 'material'];
         const currentIndex = categories.indexOf(this.currentCategory);
         const nextIndex = (currentIndex + direction + categories.length) % categories.length;

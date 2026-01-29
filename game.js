@@ -124,23 +124,34 @@ function init() {
 
     // Set up keyboard controls
     document.addEventListener('keydown', (e) => {
-        game.keys[e.key.toLowerCase()] = true;
+        const key = e.key.toLowerCase();
+        const craftingOpen = game.player && game.player.craftingUI && game.player.craftingUI.isOpen;
+        const inventoryOpen = game.player && game.player.inventoryUI && game.player.inventoryUI.isOpen;
+        const uiOpen = craftingOpen || inventoryOpen;
+        const movementKeys = ['w', 'a', 's', 'd', 'arrowup', 'arrowdown', 'arrowleft', 'arrowright'];
+
+        if (uiOpen && movementKeys.includes(key)) {
+            e.preventDefault();
+            return;
+        }
+
+        game.keys[key] = true;
 
         // Attack on spacebar
-        if (e.key === ' ') {
+        if (key === ' ') {
             e.preventDefault();
             performAttack();
         }
 
         // Toggle inventory with 'I' key
-        if (e.key.toLowerCase() === 'i') {
+        if (key === 'i') {
             if (game.player && game.player.inventoryUI) {
                 game.player.inventoryUI.toggle();
             }
         }
 
         // Open crafting with 'C' key
-        if (e.key.toLowerCase() === 'c') {
+        if (key === 'c') {
             if (game.player && game.player.craftingUI) {
                 if (!game.player.craftingUI.isOpen) {
                     e.preventDefault();
@@ -150,7 +161,7 @@ function init() {
         }
 
         // Open crafting with Enter
-        if (e.key === 'Enter') {
+        if (key === 'enter') {
             if (game.player && game.player.craftingUI) {
                 if (!game.player.craftingUI.isOpen) {
                     e.preventDefault();
@@ -160,7 +171,7 @@ function init() {
         }
 
         // Interact with Smith with 'E' key
-        if (e.key.toLowerCase() === 'e') {
+        if (key === 'e') {
             if (game.player && game.smith && game.player.craftingUI && game.gameStarted) {
                 if (game.smith.isPlayerInRange(game.player.mesh.position)) {
                     game.player.craftingUI.toggle();
@@ -171,7 +182,7 @@ function init() {
         }
 
         // Use health potion with 'H' key
-        if (e.key.toLowerCase() === 'h') {
+        if (key === 'h') {
             if (game.player && game.player.useHealthPotion) {
                 game.player.useHealthPotion();
             }
