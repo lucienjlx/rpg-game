@@ -63,6 +63,14 @@ class CraftingUI {
     }
 
     open() {
+        const overlay = document.getElementById('ui-overlay');
+        if (overlay && overlay.style.display === 'none') {
+            if (game && game.showMessage) {
+                game.showMessage('Crafting is available after the intro. Press Space to skip.', 2000);
+            }
+            return;
+        }
+
         this.isOpen = true;
         document.getElementById('crafting-panel').style.display = 'block';
         this.selectedIndex = 0;
@@ -164,9 +172,17 @@ class CraftingUI {
     }
 
     handleKeyDown(e) {
-        if (!this.isOpen) return;
-
         const key = e.key.toLowerCase();
+
+        if (!this.isOpen) {
+            if (key === 'c' || key === 'enter') {
+                e.preventDefault();
+                e.stopPropagation();
+                this.open();
+            }
+            return;
+        }
+
         if (['arrowup', 'arrowdown', 'arrowleft', 'arrowright', 'enter', 'c'].includes(key)) {
             e.preventDefault();
             e.stopPropagation();
